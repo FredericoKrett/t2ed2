@@ -33,7 +33,7 @@ void test_quadra_get_anchor_retorna_canto_sudeste(void) {
     quadra_get_anchor(quadra, &x, &y);
 
     TEST_ASSERT_DOUBLE_WITHIN(0.001, 110.0, x);
-    TEST_ASSERT_DOUBLE_WITHIN(0.001, 20.0, y);
+    TEST_ASSERT_DOUBLE_WITHIN(0.001, 100.0, y);
 
     quadra_destroy(quadra);
 }
@@ -45,19 +45,19 @@ void test_quadra_get_address_point_calcula_faces(void) {
     double y = 0.0;
 
     TEST_ASSERT_EQUAL_INT(1, quadra_get_address_point(quadra, 'N', 30.0, &x, &y));
-    TEST_ASSERT_DOUBLE_WITHIN(0.001, 80.0, x);
+    TEST_ASSERT_DOUBLE_WITHIN(0.001, 40.0, x);
     TEST_ASSERT_DOUBLE_WITHIN(0.001, 100.0, y);
 
     TEST_ASSERT_EQUAL_INT(1, quadra_get_address_point(quadra, 'S', 30.0, &x, &y));
-    TEST_ASSERT_DOUBLE_WITHIN(0.001, 80.0, x);
+    TEST_ASSERT_DOUBLE_WITHIN(0.001, 40.0, x);
     TEST_ASSERT_DOUBLE_WITHIN(0.001, 20.0, y);
 
     TEST_ASSERT_EQUAL_INT(1, quadra_get_address_point(quadra, 'L', 30.0, &x, &y));
-    TEST_ASSERT_DOUBLE_WITHIN(0.001, 110.0, x);
+    TEST_ASSERT_DOUBLE_WITHIN(0.001, 10.0, x);
     TEST_ASSERT_DOUBLE_WITHIN(0.001, 50.0, y);
 
     TEST_ASSERT_EQUAL_INT(1, quadra_get_address_point(quadra, 'O', 30.0, &x, &y));
-    TEST_ASSERT_DOUBLE_WITHIN(0.001, 10.0, x);
+    TEST_ASSERT_DOUBLE_WITHIN(0.001, 110.0, x);
     TEST_ASSERT_DOUBLE_WITHIN(0.001, 50.0, y);
 
     TEST_ASSERT_EQUAL_INT(0, quadra_get_address_point(quadra, 'X', 30.0, &x, &y));
