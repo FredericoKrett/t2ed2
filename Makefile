@@ -4,7 +4,7 @@ LDFLAGS =
 
 PROG = ted
 
-CORE_SRC = src/config.c
+CORE_SRC = src/config.c src/quadra.c
 MAIN_SRC = src/main.c
 
 .PHONY: all ted test tstall clean
@@ -16,11 +16,15 @@ ted: $(CORE_SRC) $(MAIN_SRC)
 
 test: tstall
 
-tstall: test_config
+tstall: test_config test_quadra
 	./test_config
+	./test_quadra
 
 test_config: src/config.c src/config.h tst/test_config.c tst/unity/unity.c
 	$(CC) $(CFLAGS) src/config.c tst/test_config.c tst/unity/unity.c -o test_config $(LDFLAGS)
+
+test_quadra: src/quadra.c src/quadra.h tst/test_quadra.c tst/unity/unity.c
+	$(CC) $(CFLAGS) src/quadra.c tst/test_quadra.c tst/unity/unity.c -o test_quadra $(LDFLAGS)
 
 clean:
 	rm -f $(PROG) *.o src/*.o tst/*.o test_*
