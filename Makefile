@@ -4,7 +4,7 @@ LDFLAGS =
 
 PROG = ted
 
-CORE_SRC = src/config.c src/quadra.c src/quadra_store.c src/geo_parser.c src/grafo.c
+CORE_SRC = src/config.c src/quadra.c src/quadra_store.c src/geo_parser.c src/grafo.c src/via_parser.c
 MAIN_SRC = src/main.c
 
 .PHONY: all ted test tstall clean
@@ -16,12 +16,13 @@ ted: $(CORE_SRC) $(MAIN_SRC)
 
 test: tstall
 
-tstall: test_config test_quadra test_quadra_store test_geo_parser test_grafo
+tstall: test_config test_quadra test_quadra_store test_geo_parser test_grafo test_via_parser
 	./test_config
 	./test_quadra
 	./test_quadra_store
 	./test_geo_parser
 	./test_grafo
+	./test_via_parser
 
 test_config: src/config.c src/config.h tst/test_config.c tst/unity/unity.c
 	$(CC) $(CFLAGS) src/config.c tst/test_config.c tst/unity/unity.c -o test_config $(LDFLAGS)
@@ -37,6 +38,9 @@ test_geo_parser: src/geo_parser.c src/geo_parser.h src/quadra_store.c src/quadra
 
 test_grafo: src/grafo.c src/grafo.h tst/test_grafo.c tst/unity/unity.c
 	$(CC) $(CFLAGS) src/grafo.c tst/test_grafo.c tst/unity/unity.c -o test_grafo $(LDFLAGS)
+
+test_via_parser: src/via_parser.c src/via_parser.h src/grafo.c src/grafo.h tst/test_via_parser.c tst/unity/unity.c
+	$(CC) $(CFLAGS) src/via_parser.c src/grafo.c tst/test_via_parser.c tst/unity/unity.c -o test_via_parser $(LDFLAGS)
 
 clean:
 	rm -f $(PROG) *.o src/*.o tst/*.o test_*
