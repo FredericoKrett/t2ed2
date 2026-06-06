@@ -4,7 +4,7 @@ LDFLAGS =
 
 PROG = ted
 
-CORE_SRC = src/config.c src/quadra.c src/quadra_store.c src/geo_parser.c src/grafo.c src/via_parser.c src/registradores.c
+CORE_SRC = src/config.c src/quadra.c src/quadra_store.c src/geo_parser.c src/grafo.c src/via_parser.c src/registradores.c src/fila_prioridade.c
 MAIN_SRC = src/main.c
 
 .PHONY: all ted test tstall clean
