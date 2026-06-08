@@ -16,13 +16,14 @@ ted: $(CORE_SRC) $(MAIN_SRC)
 
 test: tstall
 
-tstall: test_config test_quadra test_quadra_store test_geo_parser test_grafo test_fila_prioridade test_via_parser test_registradores
+tstall: test_config test_quadra test_quadra_store test_geo_parser test_grafo test_fila_prioridade test_caminho test_via_parser test_registradores
 	./test_config
 	./test_quadra
 	./test_quadra_store
 	./test_geo_parser
 	./test_grafo
 	./test_fila_prioridade
+	./test_caminho
 	./test_via_parser
 	./test_registradores
 
@@ -43,6 +44,9 @@ test_grafo: src/grafo.c src/grafo.h tst/test_grafo.c tst/unity/unity.c
 
 test_fila_prioridade: src/fila_prioridade.c src/fila_prioridade.h tst/test_fila_prioridade.c tst/unity/unity.c
 	$(CC) $(CFLAGS) src/fila_prioridade.c tst/test_fila_prioridade.c tst/unity/unity.c -o test_fila_prioridade $(LDFLAGS)
+
+test_caminho: src/caminho.c src/caminho.h src/grafo.c src/grafo.h src/fila_prioridade.c src/fila_prioridade.h tst/test_caminho.c tst/unity/unity.c
+	$(CC) $(CFLAGS) src/caminho.c src/grafo.c src/fila_prioridade.c tst/test_caminho.c tst/unity/unity.c -o test_caminho $(LDFLAGS)
 
 test_via_parser: src/via_parser.c src/via_parser.h src/grafo.c src/grafo.h tst/test_via_parser.c tst/unity/unity.c
 	$(CC) $(CFLAGS) src/via_parser.c src/grafo.c tst/test_via_parser.c tst/unity/unity.c -o test_via_parser $(LDFLAGS)
