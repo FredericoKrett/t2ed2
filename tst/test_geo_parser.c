@@ -5,6 +5,7 @@
 #include <stdlib.h>
 
 #define TEST_GEO_FILE "test_geo_parser.geo"
+#define EPSILON 0.001
 
 void setUp(void) {
     remove(TEST_GEO_FILE);
@@ -19,6 +20,14 @@ static void write_file(const char *content) {
     TEST_ASSERT_NOT_NULL(file);
     fputs(content, file);
     fclose(file);
+}
+
+static void assert_double_near(double expected, double actual) {
+    double diff = expected - actual;
+    if (diff < 0.0) {
+        diff = -diff;
+    }
+    TEST_ASSERT_TRUE(diff <= EPSILON);
 }
 
 void test_geo_parser_parse_file_carrega_quadras_com_estilo(void) {
@@ -49,6 +58,26 @@ void test_geo_parser_parse_file_carrega_quadras_com_estilo(void) {
     quadra_store_destroy(store);
 }
 
+void test_geo_parser_parse_file_aceita_espessura_cq_com_px(void) {
+    QuadraStore store = quadra_store_create(1);
+    Quadra quadra;
+
+    write_file(
+        "cq 1.0px coral Moccasin\n"
+        "q b01.1 95.0 95.0 120.0 80.0\n"
+    );
+
+    TEST_ASSERT_EQUAL_INT(1, geo_parser_parse_file(TEST_GEO_FILE, store));
+
+    quadra = quadra_store_find(store, "b01.1");
+    TEST_ASSERT_NOT_NULL(quadra);
+    assert_double_near(1.0, quadra_get_sw(quadra));
+    TEST_ASSERT_EQUAL_STRING("coral", quadra_get_cfill(quadra));
+    TEST_ASSERT_EQUAL_STRING("Moccasin", quadra_get_cstrk(quadra));
+
+    quadra_store_destroy(store);
+}
+
 void test_geo_parser_parse_file_rejeita_arquivo_inexistente(void) {
     QuadraStore store = quadra_store_create(1);
 
@@ -69,11 +98,23 @@ void test_geo_parser_parse_file_rejeita_comando_malformado(void) {
     TEST_ASSERT_EQUAL_INT(-1, geo_parser_parse_file(TEST_GEO_FILE, store));
 
     quadra_store_destroy(store);
+
+    store = quadra_store_create(1);
+
+    write_file(
+        "cq 2.0pt gray black\n"
+        "q cep1 10 20 30 40\n"
+    );
+
+    TEST_ASSERT_EQUAL_INT(-1, geo_parser_parse_file(TEST_GEO_FILE, store));
+
+    quadra_store_destroy(store);
 }
 
 int main(void) {
     UNITY_BEGIN();
     RUN_TEST(test_geo_parser_parse_file_carrega_quadras_com_estilo);
+    RUN_TEST(test_geo_parser_parse_file_aceita_espessura_cq_com_px);
     RUN_TEST(test_geo_parser_parse_file_rejeita_arquivo_inexistente);
     RUN_TEST(test_geo_parser_parse_file_rejeita_comando_malformado);
     return UNITY_END();

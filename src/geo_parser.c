@@ -1,6 +1,7 @@
 #include "geo_parser.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #define LINE_SIZE 512
@@ -28,12 +29,43 @@ static int is_blank_line(const char *line) {
     return 1;
 }
 
-static int parse_cq(const char *line, struct geo_style *style) {
-    char extra[TOKEN_SIZE];
-    int read = sscanf(line, "%*s %lf %63s %63s %63s",
-                      &style->sw, style->cfill, style->cstrk, extra);
+static int parse_sw_token(const char *token, double *out_sw) {
+    char *endptr;
+    double sw;
 
-    return read == 3;
+    if (token == NULL || out_sw == NULL || token[0] == '\0') {
+        return 0;
+    }
+
+    sw = strtod(token, &endptr);
+    if (endptr == token) {
+        return 0;
+    }
+    if (*endptr != '\0' && strcmp(endptr, "px") != 0) {
+        return 0;
+    }
+
+    *out_sw = sw;
+    return 1;
+}
+
+static int parse_cq(const char *line, struct geo_style *style) {
+    char sw_text[TOKEN_SIZE];
+    char cfill[TOKEN_SIZE];
+    char cstrk[TOKEN_SIZE];
+    char extra[TOKEN_SIZE];
+    double sw;
+    int read = sscanf(line, "%*s %63s %63s %63s %63s",
+                      sw_text, cfill, cstrk, extra);
+
+    if (read != 3 || !parse_sw_token(sw_text, &sw)) {
+        return 0;
+    }
+
+    style->sw = sw;
+    strcpy(style->cfill, cfill);
+    strcpy(style->cstrk, cstrk);
+    return 1;
 }
 
 static int parse_q(const char *line, QuadraStore store,
