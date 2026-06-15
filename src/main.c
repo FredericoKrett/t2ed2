@@ -99,10 +99,10 @@ static char *join_path(const char *base_dir, const char *filename) {
     return path;
 }
 
-static char *make_svg_filename(const char *geo_file) {
-    const char *name = filename_part(geo_file);
+static char *make_name_without_extension(const char *filepath) {
+    const char *name = filename_part(filepath);
     const char *extension;
-    char *svg_name;
+    char *base_name;
     size_t base_length;
 
     if (name == NULL || name[0] == '\0') {
@@ -114,13 +114,55 @@ static char *make_svg_filename(const char *geo_file) {
                       ? (size_t)(extension - name)
                       : strlen(name);
 
-    svg_name = (char *)malloc(base_length + strlen(".svg") + 1);
-    if (svg_name == NULL) {
+    base_name = (char *)malloc(base_length + 1);
+    if (base_name == NULL) {
         return NULL;
     }
 
-    memcpy(svg_name, name, base_length);
-    memcpy(svg_name + base_length, ".svg", strlen(".svg") + 1);
+    memcpy(base_name, name, base_length);
+    base_name[base_length] = '\0';
+    return base_name;
+}
+
+static char *make_svg_filename(const char *geo_file, const char *qry_file) {
+    char *geo_name;
+    char *qry_name = NULL;
+    char *svg_name;
+    size_t length;
+
+    geo_name = make_name_without_extension(geo_file);
+    if (geo_name == NULL) {
+        return NULL;
+    }
+
+    if (qry_file != NULL) {
+        qry_name = make_name_without_extension(qry_file);
+        if (qry_name == NULL) {
+            free(geo_name);
+            return NULL;
+        }
+    }
+
+    length = strlen(geo_name) + strlen(".svg") + 1;
+    if (qry_name != NULL) {
+        length += strlen(qry_name) + 1;
+    }
+
+    svg_name = (char *)malloc(length);
+    if (svg_name == NULL) {
+        free(qry_name);
+        free(geo_name);
+        return NULL;
+    }
+
+    if (qry_name != NULL) {
+        sprintf(svg_name, "%s-%s.svg", geo_name, qry_name);
+    } else {
+        sprintf(svg_name, "%s.svg", geo_name);
+    }
+
+    free(qry_name);
+    free(geo_name);
     return svg_name;
 }
 
@@ -168,7 +210,8 @@ static int gerar_svg_base(const Config config, QuadraStore quadras, Grafo grafo)
         return 0;
     }
 
-    svg_name = make_svg_filename(config_get_geo_file(config));
+    svg_name = make_svg_filename(config_get_geo_file(config),
+                                 config_get_qry_file(config));
     if (svg_name == NULL) {
         fprintf(stderr, "ted: nao foi possivel definir o nome do svg\n");
         return 0;
