@@ -1,5 +1,6 @@
 #include "grafo.h"
 
+#include <float.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -180,6 +181,30 @@ int grafo_get_vertice_coords(Grafo grafo_ref, GrafoVertice vertice,
     }
 
     return 1;
+}
+
+GrafoVertice grafo_find_vertice_mais_proximo(Grafo grafo_ref,
+                                             double x, double y) {
+    struct grafo *grafo = (struct grafo *)grafo_ref;
+    GrafoVertice melhor_vertice = -1;
+    double melhor_distancia = DBL_MAX;
+
+    if (grafo == NULL || grafo->vertice_count == 0) {
+        return -1;
+    }
+
+    for (size_t i = 0; i < grafo->vertice_count; i++) {
+        double dx = grafo->vertices[i].x - x;
+        double dy = grafo->vertices[i].y - y;
+        double distancia = dx * dx + dy * dy;
+
+        if (distancia < melhor_distancia) {
+            melhor_distancia = distancia;
+            melhor_vertice = (GrafoVertice)i;
+        }
+    }
+
+    return melhor_vertice;
 }
 
 GrafoAresta grafo_add_aresta(Grafo grafo_ref, GrafoVertice origem,

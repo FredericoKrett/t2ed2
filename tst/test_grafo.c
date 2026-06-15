@@ -69,6 +69,24 @@ void test_grafo_rejeita_vertice_duplicado(void) {
     grafo_destroy(grafo);
 }
 
+void test_grafo_find_vertice_mais_proximo(void) {
+    Grafo grafo = grafo_create(3);
+    GrafoVertice v1 = grafo_add_vertice(grafo, "v1", 0.0, 0.0);
+    GrafoVertice v2 = grafo_add_vertice(grafo, "v2", 10.0, 0.0);
+    GrafoVertice v3 = grafo_add_vertice(grafo, "v3", 0.0, 10.0);
+
+    TEST_ASSERT_EQUAL_INT(v2, grafo_find_vertice_mais_proximo(grafo, 8.0, 1.0));
+    TEST_ASSERT_EQUAL_INT(v3, grafo_find_vertice_mais_proximo(grafo, 2.0, 9.0));
+    TEST_ASSERT_EQUAL_INT(v1, grafo_find_vertice_mais_proximo(grafo, -1.0, -1.0));
+    TEST_ASSERT_EQUAL_INT(-1, grafo_find_vertice_mais_proximo(NULL, 0.0, 0.0));
+
+    grafo_destroy(grafo);
+
+    grafo = grafo_create(0);
+    TEST_ASSERT_EQUAL_INT(-1, grafo_find_vertice_mais_proximo(grafo, 0.0, 0.0));
+    grafo_destroy(grafo);
+}
+
 void test_grafo_add_aresta_direcionada_com_atributos(void) {
     Grafo grafo = grafo_create(2);
     GrafoVertice origem = grafo_add_vertice(grafo, "v1", 10.0, 20.0);
@@ -118,6 +136,7 @@ int main(void) {
     UNITY_BEGIN();
     RUN_TEST(test_grafo_add_vertice_busca_e_coordenadas);
     RUN_TEST(test_grafo_rejeita_vertice_duplicado);
+    RUN_TEST(test_grafo_find_vertice_mais_proximo);
     RUN_TEST(test_grafo_add_aresta_direcionada_com_atributos);
     RUN_TEST(test_grafo_for_each_aresta_saida_visita_adjacencias);
     return UNITY_END();

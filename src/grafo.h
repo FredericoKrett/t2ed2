@@ -86,6 +86,20 @@ int grafo_get_vertice_coords(Grafo grafo, GrafoVertice vertice,
                              double *out_x, double *out_y);
 
 /**
+ * @brief Busca o vertice mais proximo de uma coordenada.
+ *
+ * Usado para ancorar pontos geograficos, como os registradores de @o?, no
+ * sistema viario antes de calcular percursos. A distancia considerada e a
+ * euclidiana no plano do SVG.
+ *
+ * @param grafo Grafo consultado.
+ * @param x Coordenada x de referencia.
+ * @param y Coordenada y de referencia.
+ * @return Vertice mais proximo, ou -1 se o grafo for invalido ou vazio.
+ */
+GrafoVertice grafo_find_vertice_mais_proximo(Grafo grafo, double x, double y);
+
+/**
  * @brief Adiciona uma aresta direcionada entre dois vertices.
  *
  * @param grafo Grafo alterado.
