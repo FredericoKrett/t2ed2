@@ -1,8 +1,10 @@
 #include "config.h"
 #include "geo_parser.h"
 #include "grafo.h"
+#include "qry_executor.h"
 #include "qry_parser.h"
 #include "quadra_store.h"
+#include "registradores.h"
 #include "svg.h"
 #include "via_parser.h"
 
@@ -236,11 +238,26 @@ static QryComandos carregar_qry(const Config config) {
     return comandos;
 }
 
+static int resolver_origens_qry(QryComandos comandos, QuadraStore quadras,
+                                Registradores registradores) {
+    if (comandos == NULL) {
+        return 1;
+    }
+
+    if (!qry_executor_resolve_origens(comandos, quadras, registradores)) {
+        fprintf(stderr, "ted: erro ao resolver consultas de origem\n");
+        return 0;
+    }
+
+    return 1;
+}
+
 int main(int argc, char *argv[]) {
     Config config;
     QuadraStore quadras = NULL;
     Grafo grafo = NULL;
     QryComandos comandos = NULL;
+    Registradores registradores = NULL;
     int status = 1;
 
     config = config_create();
@@ -276,6 +293,18 @@ int main(int argc, char *argv[]) {
         goto cleanup;
     }
 
+    if (comandos != NULL) {
+        registradores = registradores_create();
+        if (registradores == NULL) {
+            fprintf(stderr, "ted: erro de memoria ao criar registradores\n");
+            goto cleanup;
+        }
+
+        if (!resolver_origens_qry(comandos, quadras, registradores)) {
+            goto cleanup;
+        }
+    }
+
     if (!gerar_svg_base(config, quadras, grafo)) {
         goto cleanup;
     }
@@ -283,6 +312,7 @@ int main(int argc, char *argv[]) {
     status = 0;
 
 cleanup:
+    registradores_destroy(registradores);
     qry_comandos_destroy(comandos);
     grafo_destroy(grafo);
     quadra_store_destroy(quadras);
