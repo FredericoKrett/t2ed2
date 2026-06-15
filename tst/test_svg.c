@@ -1,4 +1,5 @@
 #include "unity.h"
+#include "caminho.h"
 #include "svg.h"
 #include "grafo.h"
 #include "quadra.h"
@@ -72,9 +73,54 @@ void test_svg_render_base_rejeita_caminho_invalido(void) {
     TEST_ASSERT_EQUAL_INT(0, svg_render_base(NULL, NULL, NULL));
 }
 
+void test_svg_render_com_percursos_desenha_caminho_colorido(void) {
+    Grafo grafo = grafo_create(2);
+    GrafoVertice origem;
+    GrafoVertice destino;
+    Caminho caminho;
+    SvgPercursos percursos = svg_percursos_create();
+
+    TEST_ASSERT_NOT_NULL(grafo);
+    TEST_ASSERT_NOT_NULL(percursos);
+
+    origem = grafo_add_vertice(grafo, "v1", 0.0, 0.0);
+    destino = grafo_add_vertice(grafo, "v2", 100.0, 0.0);
+    TEST_ASSERT_NOT_EQUAL(-1, origem);
+    TEST_ASSERT_NOT_EQUAL(-1, destino);
+    TEST_ASSERT_NOT_NULL(grafo_add_aresta(grafo, origem, destino, "-", "-",
+                                          100.0, 10.0, "Rua_A"));
+
+    caminho = caminho_calcular(grafo, origem, destino,
+                               CAMINHO_CRITERIO_COMPRIMENTO);
+    TEST_ASSERT_NOT_NULL(caminho);
+    TEST_ASSERT_EQUAL_INT(1, svg_percursos_add(percursos, caminho, "#ff6600"));
+
+    TEST_ASSERT_EQUAL_INT(1, svg_render_com_percursos(TEST_SVG_FILE, NULL,
+                                                      grafo, percursos));
+    TEST_ASSERT_TRUE(file_contains("<svg:g id=\"percursos\""));
+    TEST_ASSERT_TRUE(file_contains("stroke=\"#ff6600\""));
+    TEST_ASSERT_TRUE(file_contains("stroke-width=\"4\""));
+
+    svg_percursos_destroy(percursos);
+    grafo_destroy(grafo);
+}
+
+void test_svg_percursos_rejeita_parametros_invalidos(void) {
+    SvgPercursos percursos = svg_percursos_create();
+
+    TEST_ASSERT_NOT_NULL(percursos);
+    TEST_ASSERT_EQUAL_INT(0, svg_percursos_add(NULL, NULL, "red"));
+    TEST_ASSERT_EQUAL_INT(0, svg_percursos_add(percursos, NULL, "red"));
+    TEST_ASSERT_EQUAL_INT(0, svg_percursos_add(percursos, NULL, NULL));
+
+    svg_percursos_destroy(percursos);
+}
+
 int main(void) {
     UNITY_BEGIN();
     RUN_TEST(test_svg_render_base_cria_documento_com_quadras_e_vias);
     RUN_TEST(test_svg_render_base_rejeita_caminho_invalido);
+    RUN_TEST(test_svg_render_com_percursos_desenha_caminho_colorido);
+    RUN_TEST(test_svg_percursos_rejeita_parametros_invalidos);
     return UNITY_END();
 }

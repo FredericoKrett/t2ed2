@@ -3,6 +3,7 @@
 #include "quadra.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #define SVG_MARGIN 10.0
@@ -20,6 +21,92 @@ struct svg_file_context {
     FILE *file;
     int ok;
 };
+
+struct svg_percurso_node {
+    Caminho caminho;
+    char *cor;
+    struct svg_percurso_node *next;
+};
+
+struct svg_percursos {
+    struct svg_percurso_node *head;
+    struct svg_percurso_node *tail;
+};
+
+static char *copy_text(const char *text) {
+    char *copy;
+    size_t length;
+
+    if (text == NULL) {
+        return NULL;
+    }
+
+    length = strlen(text) + 1;
+    copy = (char *)malloc(length);
+    if (copy == NULL) {
+        return NULL;
+    }
+
+    memcpy(copy, text, length);
+    return copy;
+}
+
+SvgPercursos svg_percursos_create(void) {
+    return calloc(1, sizeof(struct svg_percursos));
+}
+
+int svg_percursos_add(SvgPercursos percursos_ref, Caminho caminho,
+                      const char *cor) {
+    struct svg_percursos *percursos = (struct svg_percursos *)percursos_ref;
+    struct svg_percurso_node *node;
+
+    if (percursos == NULL || caminho == NULL || cor == NULL) {
+        return 0;
+    }
+
+    node = (struct svg_percurso_node *)calloc(1,
+                                             sizeof(struct svg_percurso_node));
+    if (node == NULL) {
+        return 0;
+    }
+
+    node->cor = copy_text(cor);
+    if (node->cor == NULL) {
+        free(node);
+        return 0;
+    }
+
+    node->caminho = caminho;
+    if (percursos->tail == NULL) {
+        percursos->head = node;
+        percursos->tail = node;
+    } else {
+        percursos->tail->next = node;
+        percursos->tail = node;
+    }
+
+    return 1;
+}
+
+void svg_percursos_destroy(SvgPercursos percursos_ref) {
+    struct svg_percursos *percursos = (struct svg_percursos *)percursos_ref;
+    struct svg_percurso_node *node;
+
+    if (percursos == NULL) {
+        return;
+    }
+
+    node = percursos->head;
+    while (node != NULL) {
+        struct svg_percurso_node *next = node->next;
+        caminho_destroy(node->caminho);
+        free(node->cor);
+        free(node);
+        node = next;
+    }
+
+    free(percursos);
+}
 
 static void bbox_include_point(struct svg_bbox *bbox, double x, double y) {
     if (!bbox->has_item) {
@@ -110,6 +197,69 @@ static void write_escaped(FILE *file, const char *text) {
             fputc(*text, file);
         }
         text++;
+    }
+}
+
+static void draw_caminho(Grafo grafo, Caminho caminho, const char *cor,
+                         struct svg_file_context *ctx) {
+    size_t count;
+
+    if (grafo == NULL || caminho == NULL || cor == NULL || !ctx->ok ||
+        !caminho_existe(caminho)) {
+        return;
+    }
+
+    count = caminho_get_aresta_count(caminho);
+    for (size_t i = 0; i < count; i++) {
+        GrafoAresta aresta = caminho_get_aresta(caminho, i);
+        double x1;
+        double y1;
+        double x2;
+        double y2;
+
+        if (!grafo_get_vertice_coords(grafo, grafo_aresta_get_origem(aresta),
+                                      &x1, &y1) ||
+            !grafo_get_vertice_coords(grafo, grafo_aresta_get_destino(aresta),
+                                      &x2, &y2)) {
+            ctx->ok = 0;
+            return;
+        }
+
+        fprintf(ctx->file,
+                "  <svg:line x1=\"%.6f\" y1=\"%.6f\" x2=\"%.6f\" "
+                "y2=\"%.6f\" stroke=\"",
+                x1, y1, x2, y2);
+        write_escaped(ctx->file, cor);
+        fputs("\" stroke-width=\"4\" stroke-opacity=\"1.000000\" />\n",
+              ctx->file);
+
+        if (ferror(ctx->file)) {
+            ctx->ok = 0;
+            return;
+        }
+    }
+}
+
+static void draw_percursos(Grafo grafo, SvgPercursos percursos_ref,
+                           struct svg_file_context *ctx) {
+    struct svg_percursos *percursos = (struct svg_percursos *)percursos_ref;
+    struct svg_percurso_node *node;
+
+    if (grafo == NULL || percursos == NULL || percursos->head == NULL ||
+        !ctx->ok) {
+        return;
+    }
+
+    fputs("<svg:g id=\"percursos\">\n", ctx->file);
+    node = percursos->head;
+    while (node != NULL) {
+        draw_caminho(grafo, node->caminho, node->cor, ctx);
+        node = node->next;
+    }
+    fputs("</svg:g>\n", ctx->file);
+
+    if (ferror(ctx->file)) {
+        ctx->ok = 0;
     }
 }
 
@@ -233,6 +383,11 @@ static void draw_quadras(QuadraStore quadras, struct svg_file_context *ctx) {
 }
 
 int svg_render_base(const char *filepath, QuadraStore quadras, Grafo grafo) {
+    return svg_render_com_percursos(filepath, quadras, grafo, NULL);
+}
+
+int svg_render_com_percursos(const char *filepath, QuadraStore quadras,
+                             Grafo grafo, SvgPercursos percursos) {
     struct svg_bbox bbox = {0.0, 0.0, 0.0, 0.0, 0};
     struct svg_file_context ctx;
 
@@ -268,6 +423,7 @@ int svg_render_base(const char *filepath, QuadraStore quadras, Grafo grafo) {
 
     draw_grafo(grafo, &ctx);
     draw_quadras(quadras, &ctx);
+    draw_percursos(grafo, percursos, &ctx);
     fputs("</svg:svg>\n", ctx.file);
 
     if (fclose(ctx.file) != 0) {
