@@ -1,4 +1,6 @@
 #include "unity.h"
+#include "caminho.h"
+#include "grafo.h"
 #include "qry_executor.h"
 #include "qry_parser.h"
 #include "quadra.h"
@@ -35,6 +37,55 @@ static QuadraStore criar_quadras_basicas(void) {
     TEST_ASSERT_EQUAL_INT(1, quadra_store_insert(quadras, quadra));
 
     return quadras;
+}
+
+struct grafo_rotas {
+    Grafo grafo;
+    GrafoVertice origem;
+    GrafoVertice destino;
+    GrafoAresta curto_1;
+    GrafoAresta curto_2;
+    GrafoAresta rapido_1;
+    GrafoAresta rapido_2;
+};
+
+static struct grafo_rotas criar_grafo_com_rotas(void) {
+    struct grafo_rotas rotas;
+    GrafoVertice intermediario_curto;
+    GrafoVertice intermediario_rapido;
+
+    rotas.grafo = grafo_create(4);
+    TEST_ASSERT_NOT_NULL(rotas.grafo);
+
+    rotas.origem = grafo_add_vertice(rotas.grafo, "origem", 0.0, 0.0);
+    intermediario_curto = grafo_add_vertice(rotas.grafo, "curto", 10.0, 0.0);
+    intermediario_rapido = grafo_add_vertice(rotas.grafo, "rapido", 0.0, 10.0);
+    rotas.destino = grafo_add_vertice(rotas.grafo, "destino", 10.0, 10.0);
+
+    TEST_ASSERT_TRUE(rotas.origem >= 0);
+    TEST_ASSERT_TRUE(intermediario_curto >= 0);
+    TEST_ASSERT_TRUE(intermediario_rapido >= 0);
+    TEST_ASSERT_TRUE(rotas.destino >= 0);
+
+    rotas.curto_1 = grafo_add_aresta(rotas.grafo, rotas.origem,
+                                     intermediario_curto, "-", "-",
+                                     10.0, 1.0, "Rua_Curta_1");
+    rotas.curto_2 = grafo_add_aresta(rotas.grafo, intermediario_curto,
+                                     rotas.destino, "-", "-",
+                                     10.0, 1.0, "Rua_Curta_2");
+    rotas.rapido_1 = grafo_add_aresta(rotas.grafo, rotas.origem,
+                                      intermediario_rapido, "-", "-",
+                                      30.0, 30.0, "Rua_Rapida_1");
+    rotas.rapido_2 = grafo_add_aresta(rotas.grafo, intermediario_rapido,
+                                      rotas.destino, "-", "-",
+                                      30.0, 30.0, "Rua_Rapida_2");
+
+    TEST_ASSERT_NOT_NULL(rotas.curto_1);
+    TEST_ASSERT_NOT_NULL(rotas.curto_2);
+    TEST_ASSERT_NOT_NULL(rotas.rapido_1);
+    TEST_ASSERT_NOT_NULL(rotas.rapido_2);
+
+    return rotas;
 }
 
 void setUp(void) {
@@ -111,10 +162,96 @@ void test_qry_executor_resolve_origens_rejeita_parametros_invalidos(void) {
     quadra_store_destroy(quadras);
 }
 
+void test_qry_executor_calcular_percurso_retorna_curto_e_rapido(void) {
+    struct grafo_rotas rotas = criar_grafo_com_rotas();
+    Registradores registradores = registradores_create();
+    QryComandos comandos;
+    QryComando comando;
+    Caminho curto = NULL;
+    Caminho rapido = NULL;
+
+    write_file("p? R1 R2 red blue\n");
+    comandos = qry_parser_parse_file(TEST_QRY_EXECUTOR_FILE);
+    comando = qry_comandos_get(comandos, 0);
+
+    TEST_ASSERT_NOT_NULL(registradores);
+    TEST_ASSERT_EQUAL_INT(1, registradores_set(registradores, 1, 0.0, 0.0));
+    TEST_ASSERT_EQUAL_INT(1, registradores_set(registradores, 2, 10.0, 10.0));
+
+    TEST_ASSERT_EQUAL_INT(1, qry_executor_calcular_percurso(
+                              comando, rotas.grafo, registradores,
+                              &curto, &rapido));
+
+    TEST_ASSERT_NOT_NULL(curto);
+    TEST_ASSERT_NOT_NULL(rapido);
+    TEST_ASSERT_EQUAL_INT(1, caminho_existe(curto));
+    TEST_ASSERT_EQUAL_INT(1, caminho_existe(rapido));
+    TEST_ASSERT_EQUAL_INT(CAMINHO_CRITERIO_COMPRIMENTO,
+                          caminho_get_criterio(curto));
+    TEST_ASSERT_EQUAL_INT(CAMINHO_CRITERIO_TEMPO,
+                          caminho_get_criterio(rapido));
+    TEST_ASSERT_EQUAL_PTR(rotas.curto_1, caminho_get_aresta(curto, 0));
+    TEST_ASSERT_EQUAL_PTR(rotas.curto_2, caminho_get_aresta(curto, 1));
+    TEST_ASSERT_EQUAL_PTR(rotas.rapido_1, caminho_get_aresta(rapido, 0));
+    TEST_ASSERT_EQUAL_PTR(rotas.rapido_2, caminho_get_aresta(rapido, 1));
+
+    caminho_destroy(curto);
+    caminho_destroy(rapido);
+    qry_comandos_destroy(comandos);
+    registradores_destroy(registradores);
+    grafo_destroy(rotas.grafo);
+}
+
+void test_qry_executor_calcular_percurso_rejeita_registrador_ausente(void) {
+    struct grafo_rotas rotas = criar_grafo_com_rotas();
+    Registradores registradores = registradores_create();
+    QryComandos comandos;
+    Caminho curto = NULL;
+    Caminho rapido = NULL;
+
+    write_file("p? R1 R2 red blue\n");
+    comandos = qry_parser_parse_file(TEST_QRY_EXECUTOR_FILE);
+
+    TEST_ASSERT_NOT_NULL(comandos);
+    TEST_ASSERT_EQUAL_INT(1, registradores_set(registradores, 1, 0.0, 0.0));
+    TEST_ASSERT_EQUAL_INT(0, qry_executor_calcular_percurso(
+                              qry_comandos_get(comandos, 0), rotas.grafo,
+                              registradores, &curto, &rapido));
+    TEST_ASSERT_NULL(curto);
+    TEST_ASSERT_NULL(rapido);
+
+    qry_comandos_destroy(comandos);
+    registradores_destroy(registradores);
+    grafo_destroy(rotas.grafo);
+}
+
+void test_qry_executor_calcular_percurso_rejeita_comando_invalido(void) {
+    struct grafo_rotas rotas = criar_grafo_com_rotas();
+    Registradores registradores = registradores_create();
+    QryComandos comandos;
+    Caminho curto = NULL;
+    Caminho rapido = NULL;
+
+    write_file("regs 2.0\n");
+    comandos = qry_parser_parse_file(TEST_QRY_EXECUTOR_FILE);
+
+    TEST_ASSERT_NOT_NULL(comandos);
+    TEST_ASSERT_EQUAL_INT(0, qry_executor_calcular_percurso(
+                              qry_comandos_get(comandos, 0), rotas.grafo,
+                              registradores, &curto, &rapido));
+
+    qry_comandos_destroy(comandos);
+    registradores_destroy(registradores);
+    grafo_destroy(rotas.grafo);
+}
+
 int main(void) {
     UNITY_BEGIN();
     RUN_TEST(test_qry_executor_resolve_origens_armazena_endereco);
     RUN_TEST(test_qry_executor_resolve_origens_rejeita_referencias_invalidas);
     RUN_TEST(test_qry_executor_resolve_origens_rejeita_parametros_invalidos);
+    RUN_TEST(test_qry_executor_calcular_percurso_retorna_curto_e_rapido);
+    RUN_TEST(test_qry_executor_calcular_percurso_rejeita_registrador_ausente);
+    RUN_TEST(test_qry_executor_calcular_percurso_rejeita_comando_invalido);
     return UNITY_END();
 }

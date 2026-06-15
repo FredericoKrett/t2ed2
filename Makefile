@@ -57,8 +57,8 @@ test_via_parser: src/via_parser.c src/via_parser.h src/grafo.c src/grafo.h tst/t
 test_qry_parser: src/qry_parser.c src/qry_parser.h tst/test_qry_parser.c tst/unity/unity.c
 	$(CC) $(CFLAGS) src/qry_parser.c tst/test_qry_parser.c tst/unity/unity.c -o test_qry_parser $(LDFLAGS)
 
-test_qry_executor: src/qry_executor.c src/qry_executor.h src/qry_parser.c src/qry_parser.h src/quadra_store.c src/quadra_store.h src/quadra.c src/quadra.h src/registradores.c src/registradores.h tst/test_qry_executor.c tst/unity/unity.c
-	$(CC) $(CFLAGS) src/qry_executor.c src/qry_parser.c src/quadra_store.c src/quadra.c src/registradores.c tst/test_qry_executor.c tst/unity/unity.c -o test_qry_executor $(LDFLAGS)
+test_qry_executor: src/qry_executor.c src/qry_executor.h src/qry_parser.c src/qry_parser.h src/quadra_store.c src/quadra_store.h src/quadra.c src/quadra.h src/registradores.c src/registradores.h src/grafo.c src/grafo.h src/caminho.c src/caminho.h src/fila_prioridade.c src/fila_prioridade.h tst/test_qry_executor.c tst/unity/unity.c
+	$(CC) $(CFLAGS) src/qry_executor.c src/qry_parser.c src/quadra_store.c src/quadra.c src/registradores.c src/grafo.c src/caminho.c src/fila_prioridade.c tst/test_qry_executor.c tst/unity/unity.c -o test_qry_executor $(LDFLAGS)
 
 test_svg: src/svg.c src/svg.h src/quadra_store.c src/quadra_store.h src/quadra.c src/quadra.h src/grafo.c src/grafo.h tst/test_svg.c tst/unity/unity.c
 	$(CC) $(CFLAGS) src/svg.c src/quadra_store.c src/quadra.c src/grafo.c tst/test_svg.c tst/unity/unity.c -o test_svg $(LDFLAGS)

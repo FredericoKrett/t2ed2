@@ -1,6 +1,8 @@
 #ifndef QRY_EXECUTOR_H
 #define QRY_EXECUTOR_H
 
+#include "caminho.h"
+#include "grafo.h"
 #include "qry_parser.h"
 #include "quadra_store.h"
 #include "registradores.h"
@@ -31,5 +33,30 @@
  */
 int qry_executor_resolve_origens(QryComandos comandos, QuadraStore quadras,
                                  Registradores registradores);
+
+/**
+ * @brief Calcula os dois percursos de um comando p?.
+ *
+ * Usa os registradores textuais do comando para recuperar as coordenadas de
+ * origem e destino. Cada coordenada e associada ao vertice mais proximo do
+ * grafo viario. Em seguida, calcula o caminho mais curto por comprimento e o
+ * caminho mais rapido por tempo de travessia.
+ *
+ * Os caminhos retornados pertencem ao chamador, que deve libera-los com
+ * caminho_destroy. Em caso de erro, nenhum caminho fica pendente para o
+ * chamador destruir.
+ *
+ * @param comando Comando p? obtido do parser.
+ * @param grafo Grafo viario consultado.
+ * @param registradores Tabela R0..R10 com origem e destino ja definidos.
+ * @param out_curto Ponteiro que recebera o caminho por comprimento.
+ * @param out_rapido Ponteiro que recebera o caminho por tempo.
+ * @return 1 se calculou os caminhos; 0 em caso de parametro invalido,
+ *         comando de outro tipo, registrador ausente ou falha de calculo.
+ */
+int qry_executor_calcular_percurso(QryComando comando, Grafo grafo,
+                                   Registradores registradores,
+                                   Caminho *out_curto,
+                                   Caminho *out_rapido);
 
 #endif
