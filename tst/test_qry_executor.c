@@ -197,6 +197,33 @@ void test_qry_executor_resolve_origens_rejeita_parametros_invalidos(void) {
     quadra_store_destroy(quadras);
 }
 
+void test_qry_executor_aplicar_mvm_atualiza_arestas_na_regiao(void) {
+    Grafo grafo = grafo_create(3);
+    GrafoVertice v1 = grafo_add_vertice(grafo, "v1", 0.0, 0.0);
+    GrafoVertice v2 = grafo_add_vertice(grafo, "v2", 10.0, 0.0);
+    GrafoVertice v3 = grafo_add_vertice(grafo, "v3", 20.0, 0.0);
+    GrafoAresta interna = grafo_add_aresta(grafo, v1, v2, "-", "-",
+                                           10.0, 5.0, "Rua_A");
+    GrafoAresta externa = grafo_add_aresta(grafo, v2, v3, "-", "-",
+                                           10.0, 8.0, "Rua_B");
+    QryComandos comandos;
+
+    write_file("mvm 2.5 -1.0 -1.0 12.0 2.0\n");
+    comandos = qry_parser_parse_file(TEST_QRY_EXECUTOR_FILE);
+
+    TEST_ASSERT_NOT_NULL(grafo);
+    TEST_ASSERT_NOT_NULL(interna);
+    TEST_ASSERT_NOT_NULL(externa);
+    TEST_ASSERT_NOT_NULL(comandos);
+    TEST_ASSERT_EQUAL_INT(1, qry_executor_aplicar_mvm(
+                              qry_comandos_get(comandos, 0), grafo));
+    assert_double_near(2.5, grafo_aresta_get_vm(interna));
+    assert_double_near(8.0, grafo_aresta_get_vm(externa));
+
+    qry_comandos_destroy(comandos);
+    grafo_destroy(grafo);
+}
+
 void test_qry_executor_calcular_percurso_retorna_curto_e_rapido(void) {
     struct grafo_rotas rotas = criar_grafo_com_rotas();
     Registradores registradores = registradores_create();
@@ -286,6 +313,7 @@ int main(void) {
     RUN_TEST(test_qry_executor_resolve_origem_permite_sobrescrever_registrador);
     RUN_TEST(test_qry_executor_resolve_origens_rejeita_referencias_invalidas);
     RUN_TEST(test_qry_executor_resolve_origens_rejeita_parametros_invalidos);
+    RUN_TEST(test_qry_executor_aplicar_mvm_atualiza_arestas_na_regiao);
     RUN_TEST(test_qry_executor_calcular_percurso_retorna_curto_e_rapido);
     RUN_TEST(test_qry_executor_calcular_percurso_rejeita_registrador_ausente);
     RUN_TEST(test_qry_executor_calcular_percurso_rejeita_comando_invalido);

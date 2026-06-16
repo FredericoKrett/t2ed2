@@ -274,6 +274,38 @@ void grafo_for_each_aresta_saida(Grafo grafo_ref, GrafoVertice origem,
     }
 }
 
+static int ponto_em_regiao(double px, double py, double x, double y,
+                           double w, double h) {
+    return px >= x && px <= x + w && py >= y && py <= y + h;
+}
+
+int grafo_atualizar_vm_regiao(Grafo grafo_ref, double vm, double x, double y,
+                              double w, double h) {
+    struct grafo *grafo = (struct grafo *)grafo_ref;
+    int atualizadas = 0;
+
+    if (grafo == NULL || vm < 0.0 || w < 0.0 || h < 0.0) {
+        return -1;
+    }
+
+    for (size_t i = 0; i < grafo->vertice_count; i++) {
+        for (struct grafo_aresta *aresta = grafo->vertices[i].arestas_saida;
+             aresta != NULL;
+             aresta = aresta->next) {
+            struct grafo_vertice *origem = &grafo->vertices[aresta->origem];
+            struct grafo_vertice *destino = &grafo->vertices[aresta->destino];
+
+            if (ponto_em_regiao(origem->x, origem->y, x, y, w, h) &&
+                ponto_em_regiao(destino->x, destino->y, x, y, w, h)) {
+                aresta->vm = vm;
+                atualizadas++;
+            }
+        }
+    }
+
+    return atualizadas;
+}
+
 GrafoVertice grafo_aresta_get_origem(GrafoAresta aresta_ref) {
     struct grafo_aresta *aresta = (struct grafo_aresta *)aresta_ref;
     return aresta != NULL ? aresta->origem : -1;

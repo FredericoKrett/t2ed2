@@ -144,6 +144,25 @@ void grafo_for_each_aresta_saida(Grafo grafo, GrafoVertice origem,
                                  GrafoArestaVisitor visitor, void *context);
 
 /**
+ * @brief Atualiza a velocidade media das arestas dentro de uma regiao.
+ *
+ * Considera uma aresta dentro da regiao quando seus vertices de origem e
+ * destino pertencem ao retangulo fechado definido por (x, y, w, h). A funcao
+ * altera apenas as arestas selecionadas.
+ *
+ * @param grafo Grafo alterado.
+ * @param vm Nova velocidade media.
+ * @param x Coordenada x do canto inferior esquerdo da regiao.
+ * @param y Coordenada y do canto inferior esquerdo da regiao.
+ * @param w Largura da regiao.
+ * @param h Altura da regiao.
+ * @return Quantidade de arestas atualizadas, ou -1 em caso de parametro
+ *         invalido.
+ */
+int grafo_atualizar_vm_regiao(Grafo grafo, double vm, double x, double y,
+                              double w, double h);
+
+/**
  * @brief Retorna o vertice de origem da aresta.
  */
 GrafoVertice grafo_aresta_get_origem(GrafoAresta aresta);

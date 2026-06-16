@@ -132,6 +132,30 @@ void test_grafo_for_each_aresta_saida_visita_adjacencias(void) {
     grafo_destroy(grafo);
 }
 
+void test_grafo_atualizar_vm_regiao_altera_arestas_internas(void) {
+    Grafo grafo = grafo_create(4);
+    GrafoVertice v1 = grafo_add_vertice(grafo, "v1", 0.0, 0.0);
+    GrafoVertice v2 = grafo_add_vertice(grafo, "v2", 10.0, 0.0);
+    GrafoVertice v3 = grafo_add_vertice(grafo, "v3", 20.0, 0.0);
+    GrafoAresta interna = grafo_add_aresta(grafo, v1, v2, "-", "-",
+                                           10.0, 5.0, "Rua_A");
+    GrafoAresta externa = grafo_add_aresta(grafo, v2, v3, "-", "-",
+                                           10.0, 7.0, "Rua_B");
+
+    TEST_ASSERT_NOT_NULL(interna);
+    TEST_ASSERT_NOT_NULL(externa);
+    TEST_ASSERT_EQUAL_INT(1, grafo_atualizar_vm_regiao(grafo, 2.5,
+                                                       -1.0, -1.0,
+                                                       12.0, 2.0));
+    assert_double_near(2.5, grafo_aresta_get_vm(interna));
+    assert_double_near(7.0, grafo_aresta_get_vm(externa));
+    TEST_ASSERT_EQUAL_INT(-1, grafo_atualizar_vm_regiao(NULL, 1.0,
+                                                        0.0, 0.0,
+                                                        10.0, 10.0));
+
+    grafo_destroy(grafo);
+}
+
 int main(void) {
     UNITY_BEGIN();
     RUN_TEST(test_grafo_add_vertice_busca_e_coordenadas);
@@ -139,5 +163,6 @@ int main(void) {
     RUN_TEST(test_grafo_find_vertice_mais_proximo);
     RUN_TEST(test_grafo_add_aresta_direcionada_com_atributos);
     RUN_TEST(test_grafo_for_each_aresta_saida_visita_adjacencias);
+    RUN_TEST(test_grafo_atualizar_vm_regiao_altera_arestas_internas);
     return UNITY_END();
 }

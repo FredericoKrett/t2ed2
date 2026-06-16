@@ -76,6 +76,20 @@ int qry_executor_resolve_origens(QryComandos comandos, QuadraStore quadras,
     return 1;
 }
 
+int qry_executor_aplicar_mvm(QryComando comando, Grafo grafo) {
+    if (comando == NULL || grafo == NULL ||
+        qry_comando_get_tipo(comando) != QRY_COMANDO_MVM) {
+        return 0;
+    }
+
+    return grafo_atualizar_vm_regiao(grafo,
+                                     qry_comando_get_velocidade(comando),
+                                     qry_comando_get_x(comando),
+                                     qry_comando_get_y(comando),
+                                     qry_comando_get_w(comando),
+                                     qry_comando_get_h(comando)) >= 0;
+}
+
 int qry_executor_calcular_percurso(QryComando comando, Grafo grafo,
                                    Registradores registradores,
                                    Caminho *out_curto,

@@ -338,6 +338,10 @@ static int executar_qry_para_svg(QryComandos comandos, QuadraStore quadras,
                                              registradores)) {
                 return 0;
             }
+        } else if (tipo == QRY_COMANDO_MVM) {
+            if (!qry_executor_aplicar_mvm(comando, grafo)) {
+                return 0;
+            }
         } else if (tipo == QRY_COMANDO_PERCURSO &&
                    !adicionar_percurso_svg(comando, grafo, registradores,
                                            percursos)) {

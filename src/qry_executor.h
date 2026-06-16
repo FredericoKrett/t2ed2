@@ -52,6 +52,20 @@ int qry_executor_resolve_origens(QryComandos comandos, QuadraStore quadras,
                                  Registradores registradores);
 
 /**
+ * @brief Aplica um comando mvm sobre o grafo viario.
+ *
+ * Atualiza para a velocidade informada no comando todas as arestas contidas na
+ * regiao retangular do proprio comando. A selecao das arestas e feita pelo TAD
+ * de grafo.
+ *
+ * @param comando Comando mvm obtido do parser.
+ * @param grafo Grafo viario alterado.
+ * @return 1 se aplicou o comando; 0 em caso de parametro invalido, comando de
+ *         outro tipo ou falha na atualizacao.
+ */
+int qry_executor_aplicar_mvm(QryComando comando, Grafo grafo);
+
+/**
  * @brief Calcula os dois percursos de um comando p?.
  *
  * Usa os registradores textuais do comando para recuperar as coordenadas de
