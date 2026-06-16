@@ -123,6 +123,41 @@ void test_qry_executor_resolve_origens_armazena_endereco(void) {
     quadra_store_destroy(quadras);
 }
 
+void test_qry_executor_resolve_origem_permite_sobrescrever_registrador(void) {
+    QuadraStore quadras = criar_quadras_basicas();
+    Registradores registradores = registradores_create();
+    QryComandos comandos;
+    double x = 0.0;
+    double y = 0.0;
+
+    write_file(
+        "@o? R3 cep1 N 30.0\n"
+        "@o? R3 cep1 S 45.0\n"
+    );
+
+    comandos = qry_parser_parse_file(TEST_QRY_EXECUTOR_FILE);
+
+    TEST_ASSERT_NOT_NULL(registradores);
+    TEST_ASSERT_NOT_NULL(comandos);
+    TEST_ASSERT_EQUAL_INT(1, qry_executor_resolve_origem(
+                              qry_comandos_get(comandos, 0), quadras,
+                              registradores));
+    TEST_ASSERT_EQUAL_INT(1, registradores_get(registradores, 3, &x, &y));
+    assert_double_near(40.0, x);
+    assert_double_near(100.0, y);
+
+    TEST_ASSERT_EQUAL_INT(1, qry_executor_resolve_origem(
+                              qry_comandos_get(comandos, 1), quadras,
+                              registradores));
+    TEST_ASSERT_EQUAL_INT(1, registradores_get(registradores, 3, &x, &y));
+    assert_double_near(55.0, x);
+    assert_double_near(20.0, y);
+
+    qry_comandos_destroy(comandos);
+    registradores_destroy(registradores);
+    quadra_store_destroy(quadras);
+}
+
 void test_qry_executor_resolve_origens_rejeita_referencias_invalidas(void) {
     QuadraStore quadras = criar_quadras_basicas();
     Registradores registradores = registradores_create();
@@ -248,6 +283,7 @@ void test_qry_executor_calcular_percurso_rejeita_comando_invalido(void) {
 int main(void) {
     UNITY_BEGIN();
     RUN_TEST(test_qry_executor_resolve_origens_armazena_endereco);
+    RUN_TEST(test_qry_executor_resolve_origem_permite_sobrescrever_registrador);
     RUN_TEST(test_qry_executor_resolve_origens_rejeita_referencias_invalidas);
     RUN_TEST(test_qry_executor_resolve_origens_rejeita_parametros_invalidos);
     RUN_TEST(test_qry_executor_calcular_percurso_retorna_curto_e_rapido);

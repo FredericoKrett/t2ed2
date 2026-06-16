@@ -4,15 +4,23 @@
 
 #include <stddef.h>
 
-static int executar_origem(QryComando comando, QuadraStore quadras,
-                           Registradores registradores) {
-    const char *reg_nome = qry_comando_get_reg1(comando);
-    const char *cep = qry_comando_get_cep(comando);
-    int indice = registradores_parse_nome(reg_nome);
+int qry_executor_resolve_origem(QryComando comando, QuadraStore quadras,
+                                Registradores registradores) {
+    const char *reg_nome;
+    const char *cep;
+    int indice;
     Quadra quadra;
     double x;
     double y;
 
+    if (comando == NULL || quadras == NULL || registradores == NULL ||
+        qry_comando_get_tipo(comando) != QRY_COMANDO_ORIGEM) {
+        return 0;
+    }
+
+    reg_nome = qry_comando_get_reg1(comando);
+    cep = qry_comando_get_cep(comando);
+    indice = registradores_parse_nome(reg_nome);
     if (indice < 0 || cep == NULL) {
         return 0;
     }
@@ -60,7 +68,7 @@ int qry_executor_resolve_origens(QryComandos comandos, QuadraStore quadras,
         }
 
         if (qry_comando_get_tipo(comando) == QRY_COMANDO_ORIGEM &&
-            !executar_origem(comando, quadras, registradores)) {
+            !qry_executor_resolve_origem(comando, quadras, registradores)) {
             return 0;
         }
     }

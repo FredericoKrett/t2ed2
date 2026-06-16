@@ -18,6 +18,23 @@
  */
 
 /**
+ * @brief Resolve um comando @o? e armazena sua coordenada.
+ *
+ * Busca a quadra pelo CEP do comando, calcula o ponto do endereco na face
+ * informada e grava a coordenada no registrador indicado. Esta funcao permite
+ * executar arquivos .qry em ordem, alternando @o? com comandos que usam os
+ * registradores ja definidos ate aquele momento.
+ *
+ * @param comando Comando @o? obtido do parser.
+ * @param quadras Tabela de quadras carregada do .geo.
+ * @param registradores Tabela R0..R10 que recebera a coordenada.
+ * @return 1 se resolveu a origem; 0 em caso de parametro invalido, comando de
+ *         outro tipo, registrador invalido, CEP ausente ou face invalida.
+ */
+int qry_executor_resolve_origem(QryComando comando, QuadraStore quadras,
+                                Registradores registradores);
+
+/**
  * @brief Resolve comandos @o? e armazena suas coordenadas em registradores.
  *
  * Percorre a lista de comandos na ordem original. Para cada @o?, busca a

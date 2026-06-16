@@ -282,64 +282,65 @@ static QryComandos carregar_qry(const Config config) {
     return comandos;
 }
 
-static int resolver_origens_qry(QryComandos comandos, QuadraStore quadras,
-                                Registradores registradores) {
-    if (comandos == NULL) {
-        return 1;
+static int adicionar_percurso_svg(QryComando comando, Grafo grafo,
+                                  Registradores registradores,
+                                  SvgPercursos percursos) {
+    Caminho curto = NULL;
+    Caminho rapido = NULL;
+
+    if (grafo == NULL ||
+        !qry_executor_calcular_percurso(comando, grafo, registradores,
+                                        &curto, &rapido)) {
+        return 0;
     }
 
-    if (!qry_executor_resolve_origens(comandos, quadras, registradores)) {
-        fprintf(stderr, "ted: erro ao resolver consultas de origem\n");
+    if (!svg_percursos_add(percursos, curto,
+                           qry_comando_get_cor_curto(comando))) {
+        caminho_destroy(curto);
+        caminho_destroy(rapido);
+        return 0;
+    }
+    curto = NULL;
+
+    if (!svg_percursos_add(percursos, rapido,
+                           qry_comando_get_cor_rapido(comando))) {
+        caminho_destroy(rapido);
         return 0;
     }
 
     return 1;
 }
 
-static int adicionar_percursos_qry(QryComandos comandos, Grafo grafo,
-                                   Registradores registradores,
-                                   SvgPercursos percursos) {
+static int executar_qry_para_svg(QryComandos comandos, QuadraStore quadras,
+                                 Grafo grafo, Registradores registradores,
+                                 SvgPercursos percursos) {
     size_t count;
 
     if (comandos == NULL) {
         return 1;
     }
-    if (registradores == NULL || percursos == NULL) {
+    if (quadras == NULL || registradores == NULL || percursos == NULL) {
         return 0;
     }
 
     count = qry_comandos_count(comandos);
     for (size_t i = 0; i < count; i++) {
         QryComando comando = qry_comandos_get(comandos, i);
-        Caminho curto = NULL;
-        Caminho rapido = NULL;
+        QryComandoTipo tipo;
 
         if (comando == NULL) {
             return 0;
         }
-        if (qry_comando_get_tipo(comando) != QRY_COMANDO_PERCURSO) {
-            continue;
-        }
-        if (grafo == NULL) {
-            return 0;
-        }
 
-        if (!qry_executor_calcular_percurso(comando, grafo, registradores,
-                                            &curto, &rapido)) {
-            return 0;
-        }
-
-        if (!svg_percursos_add(percursos, curto,
-                               qry_comando_get_cor_curto(comando))) {
-            caminho_destroy(curto);
-            caminho_destroy(rapido);
-            return 0;
-        }
-        curto = NULL;
-
-        if (!svg_percursos_add(percursos, rapido,
-                               qry_comando_get_cor_rapido(comando))) {
-            caminho_destroy(rapido);
+        tipo = qry_comando_get_tipo(comando);
+        if (tipo == QRY_COMANDO_ORIGEM) {
+            if (!qry_executor_resolve_origem(comando, quadras,
+                                             registradores)) {
+                return 0;
+            }
+        } else if (tipo == QRY_COMANDO_PERCURSO &&
+                   !adicionar_percurso_svg(comando, grafo, registradores,
+                                           percursos)) {
             return 0;
         }
     }
@@ -396,19 +397,15 @@ int main(int argc, char *argv[]) {
             goto cleanup;
         }
 
-        if (!resolver_origens_qry(comandos, quadras, registradores)) {
-            goto cleanup;
-        }
-
         percursos = svg_percursos_create();
         if (percursos == NULL) {
             fprintf(stderr, "ted: erro de memoria ao criar percursos do svg\n");
             goto cleanup;
         }
 
-        if (!adicionar_percursos_qry(comandos, grafo, registradores,
-                                     percursos)) {
-            fprintf(stderr, "ted: erro ao calcular percursos do qry\n");
+        if (!executar_qry_para_svg(comandos, quadras, grafo, registradores,
+                                   percursos)) {
+            fprintf(stderr, "ted: erro ao executar consultas do qry\n");
             goto cleanup;
         }
     }
