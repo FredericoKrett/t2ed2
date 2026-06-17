@@ -200,7 +200,7 @@ static int carregar_geo(const Config config, QuadraStore quadras) {
 }
 
 static int gerar_svg_base(const Config config, QuadraStore quadras, Grafo grafo,
-                          SvgPercursos percursos) {
+                          SvgPercursos percursos, SvgRegioes regioes) {
     char *svg_name;
     char *svg_path;
     int ok;
@@ -225,7 +225,8 @@ static int gerar_svg_base(const Config config, QuadraStore quadras, Grafo grafo,
         return 0;
     }
 
-    ok = svg_render_com_percursos(svg_path, quadras, grafo, percursos);
+    ok = svg_render_com_anotacoes(svg_path, quadras, grafo, percursos,
+                                  regioes);
     if (!ok) {
         fprintf(stderr, "ted: erro ao escrever svg: %s\n", svg_path);
     }
@@ -311,15 +312,36 @@ static int adicionar_percurso_svg(QryComando comando, Grafo grafo,
     return 1;
 }
 
+static int adicionar_regs_svg(QryComando comando, Grafo grafo,
+                              SvgRegioes regioes) {
+    GrafoComponentes componentes;
+    int ok;
+
+    if (grafo == NULL || regioes == NULL) {
+        return 0;
+    }
+
+    componentes = qry_executor_calcular_regs(comando, grafo);
+    if (componentes == NULL) {
+        return 0;
+    }
+
+    ok = svg_regioes_add_componentes(regioes, componentes);
+    grafo_componentes_destroy(componentes);
+    return ok;
+}
+
 static int executar_qry_para_svg(QryComandos comandos, QuadraStore quadras,
                                  Grafo grafo, Registradores registradores,
-                                 SvgPercursos percursos) {
+                                 SvgPercursos percursos,
+                                 SvgRegioes regioes) {
     size_t count;
 
     if (comandos == NULL) {
         return 1;
     }
-    if (quadras == NULL || registradores == NULL || percursos == NULL) {
+    if (quadras == NULL || registradores == NULL || percursos == NULL ||
+        regioes == NULL) {
         return 0;
     }
 
@@ -342,6 +364,10 @@ static int executar_qry_para_svg(QryComandos comandos, QuadraStore quadras,
             if (!qry_executor_aplicar_mvm(comando, grafo)) {
                 return 0;
             }
+        } else if (tipo == QRY_COMANDO_REGS) {
+            if (!adicionar_regs_svg(comando, grafo, regioes)) {
+                return 0;
+            }
         } else if (tipo == QRY_COMANDO_PERCURSO &&
                    !adicionar_percurso_svg(comando, grafo, registradores,
                                            percursos)) {
@@ -359,6 +385,7 @@ int main(int argc, char *argv[]) {
     QryComandos comandos = NULL;
     Registradores registradores = NULL;
     SvgPercursos percursos = NULL;
+    SvgRegioes regioes = NULL;
     int status = 1;
 
     config = config_create();
@@ -407,20 +434,27 @@ int main(int argc, char *argv[]) {
             goto cleanup;
         }
 
+        regioes = svg_regioes_create();
+        if (regioes == NULL) {
+            fprintf(stderr, "ted: erro de memoria ao criar regioes do svg\n");
+            goto cleanup;
+        }
+
         if (!executar_qry_para_svg(comandos, quadras, grafo, registradores,
-                                   percursos)) {
+                                   percursos, regioes)) {
             fprintf(stderr, "ted: erro ao executar consultas do qry\n");
             goto cleanup;
         }
     }
 
-    if (!gerar_svg_base(config, quadras, grafo, percursos)) {
+    if (!gerar_svg_base(config, quadras, grafo, percursos, regioes)) {
         goto cleanup;
     }
 
     status = 0;
 
 cleanup:
+    svg_regioes_destroy(regioes);
     svg_percursos_destroy(percursos);
     registradores_destroy(registradores);
     qry_comandos_destroy(comandos);

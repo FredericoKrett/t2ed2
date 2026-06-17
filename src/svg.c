@@ -8,6 +8,10 @@
 
 #define SVG_MARGIN 10.0
 #define SVG_DEFAULT_SIZE 1000.0
+#define REGIAO_COR_COUNT 6
+
+static const char *REGIAO_CORES[REGIAO_COR_COUNT] = {
+    "#ff0000", "#00aaff", "#ffaa00", "#8a2be2", "#00aa55", "#ff66cc"};
 
 struct svg_bbox {
     double min_x;
@@ -31,6 +35,21 @@ struct svg_percurso_node {
 struct svg_percursos {
     struct svg_percurso_node *head;
     struct svg_percurso_node *tail;
+};
+
+struct svg_regiao_node {
+    double x;
+    double y;
+    double w;
+    double h;
+    char *cor;
+    struct svg_regiao_node *next;
+};
+
+struct svg_regioes {
+    struct svg_regiao_node *head;
+    struct svg_regiao_node *tail;
+    size_t count;
 };
 
 static char *copy_text(const char *text) {
@@ -106,6 +125,92 @@ void svg_percursos_destroy(SvgPercursos percursos_ref) {
     }
 
     free(percursos);
+}
+
+SvgRegioes svg_regioes_create(void) {
+    return calloc(1, sizeof(struct svg_regioes));
+}
+
+static int svg_regioes_add_rect(SvgRegioes regioes_ref, double x, double y,
+                                double w, double h, const char *cor) {
+    struct svg_regioes *regioes = (struct svg_regioes *)regioes_ref;
+    struct svg_regiao_node *node;
+
+    if (regioes == NULL || cor == NULL || w < 0.0 || h < 0.0) {
+        return 0;
+    }
+
+    node = (struct svg_regiao_node *)calloc(1, sizeof(struct svg_regiao_node));
+    if (node == NULL) {
+        return 0;
+    }
+
+    node->cor = copy_text(cor);
+    if (node->cor == NULL) {
+        free(node);
+        return 0;
+    }
+
+    node->x = x;
+    node->y = y;
+    node->w = w;
+    node->h = h;
+
+    if (regioes->tail == NULL) {
+        regioes->head = node;
+        regioes->tail = node;
+    } else {
+        regioes->tail->next = node;
+        regioes->tail = node;
+    }
+    regioes->count++;
+
+    return 1;
+}
+
+int svg_regioes_add_componentes(SvgRegioes regioes_ref,
+                                GrafoComponentes componentes) {
+    struct svg_regioes *regioes = (struct svg_regioes *)regioes_ref;
+    size_t count;
+
+    if (regioes == NULL || componentes == NULL) {
+        return 0;
+    }
+
+    count = grafo_componentes_count(componentes);
+    for (size_t i = 0; i < count; i++) {
+        double x;
+        double y;
+        double w;
+        double h;
+        const char *cor = REGIAO_CORES[regioes->count % REGIAO_COR_COUNT];
+
+        if (!grafo_componentes_get_bbox(componentes, i, &x, &y, &w, &h) ||
+            !svg_regioes_add_rect(regioes, x, y, w, h, cor)) {
+            return 0;
+        }
+    }
+
+    return 1;
+}
+
+void svg_regioes_destroy(SvgRegioes regioes_ref) {
+    struct svg_regioes *regioes = (struct svg_regioes *)regioes_ref;
+    struct svg_regiao_node *node;
+
+    if (regioes == NULL) {
+        return;
+    }
+
+    node = regioes->head;
+    while (node != NULL) {
+        struct svg_regiao_node *next = node->next;
+        free(node->cor);
+        free(node);
+        node = next;
+    }
+
+    free(regioes);
 }
 
 static void bbox_include_point(struct svg_bbox *bbox, double x, double y) {
@@ -263,6 +368,37 @@ static void draw_percursos(Grafo grafo, SvgPercursos percursos_ref,
     }
 }
 
+static void draw_regioes(SvgRegioes regioes_ref,
+                         struct svg_file_context *ctx) {
+    struct svg_regioes *regioes = (struct svg_regioes *)regioes_ref;
+    struct svg_regiao_node *node;
+
+    if (regioes == NULL || regioes->head == NULL || !ctx->ok) {
+        return;
+    }
+
+    fputs("<svg:g id=\"regs\">\n", ctx->file);
+    node = regioes->head;
+    while (node != NULL) {
+        fprintf(ctx->file,
+                "  <svg:rect x=\"%.6f\" y=\"%.6f\" width=\"%.6f\" "
+                "height=\"%.6f\" fill=\"",
+                node->x, node->y, node->w, node->h);
+        write_escaped(ctx->file, node->cor);
+        fputs("\" stroke=\"", ctx->file);
+        write_escaped(ctx->file, node->cor);
+        fputs("\" stroke-width=\"3\" fill-opacity=\"0.500000\" "
+              "stroke-opacity=\"0.900000\" />\n",
+              ctx->file);
+        node = node->next;
+    }
+    fputs("</svg:g>\n", ctx->file);
+
+    if (ferror(ctx->file)) {
+        ctx->ok = 0;
+    }
+}
+
 static void draw_quadra(Quadra quadra, void *context) {
     struct svg_file_context *ctx = (struct svg_file_context *)context;
     FILE *file = ctx->file;
@@ -383,11 +519,17 @@ static void draw_quadras(QuadraStore quadras, struct svg_file_context *ctx) {
 }
 
 int svg_render_base(const char *filepath, QuadraStore quadras, Grafo grafo) {
-    return svg_render_com_percursos(filepath, quadras, grafo, NULL);
+    return svg_render_com_anotacoes(filepath, quadras, grafo, NULL, NULL);
 }
 
 int svg_render_com_percursos(const char *filepath, QuadraStore quadras,
                              Grafo grafo, SvgPercursos percursos) {
+    return svg_render_com_anotacoes(filepath, quadras, grafo, percursos, NULL);
+}
+
+int svg_render_com_anotacoes(const char *filepath, QuadraStore quadras,
+                             Grafo grafo, SvgPercursos percursos,
+                             SvgRegioes regioes) {
     struct svg_bbox bbox = {0.0, 0.0, 0.0, 0.0, 0};
     struct svg_file_context ctx;
 
@@ -423,6 +565,7 @@ int svg_render_com_percursos(const char *filepath, QuadraStore quadras,
 
     draw_grafo(grafo, &ctx);
     draw_quadras(quadras, &ctx);
+    draw_regioes(regioes, &ctx);
     draw_percursos(grafo, percursos, &ctx);
     fputs("</svg:svg>\n", ctx.file);
 

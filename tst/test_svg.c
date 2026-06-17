@@ -116,11 +116,61 @@ void test_svg_percursos_rejeita_parametros_invalidos(void) {
     svg_percursos_destroy(percursos);
 }
 
+void test_svg_render_com_anotacoes_desenha_regioes_de_regs(void) {
+    Grafo grafo = grafo_create(3);
+    GrafoVertice v1;
+    GrafoVertice v2;
+    GrafoVertice v3;
+    GrafoComponentes componentes;
+    SvgRegioes regioes = svg_regioes_create();
+
+    TEST_ASSERT_NOT_NULL(grafo);
+    TEST_ASSERT_NOT_NULL(regioes);
+
+    v1 = grafo_add_vertice(grafo, "v1", 0.0, 0.0);
+    v2 = grafo_add_vertice(grafo, "v2", 100.0, 0.0);
+    v3 = grafo_add_vertice(grafo, "v3", 200.0, 0.0);
+    TEST_ASSERT_NOT_EQUAL(-1, v1);
+    TEST_ASSERT_NOT_EQUAL(-1, v2);
+    TEST_ASSERT_NOT_EQUAL(-1, v3);
+    TEST_ASSERT_NOT_NULL(grafo_add_aresta(grafo, v1, v2, "-", "-",
+                                          100.0, 2.0, "Rua_Lenta"));
+    TEST_ASSERT_NOT_NULL(grafo_add_aresta(grafo, v2, v3, "-", "-",
+                                          100.0, 8.0, "Rua_Rapida"));
+
+    componentes = grafo_calcular_componentes_lentos(grafo, 5.0);
+    TEST_ASSERT_NOT_NULL(componentes);
+    TEST_ASSERT_EQUAL_INT(1, svg_regioes_add_componentes(regioes,
+                                                         componentes));
+    grafo_componentes_destroy(componentes);
+
+    TEST_ASSERT_EQUAL_INT(1, svg_render_com_anotacoes(TEST_SVG_FILE, NULL,
+                                                      grafo, NULL, regioes));
+    TEST_ASSERT_TRUE(file_contains("<svg:g id=\"regs\""));
+    TEST_ASSERT_TRUE(file_contains("fill-opacity=\"0.500000\""));
+    TEST_ASSERT_TRUE(file_contains("stroke-width=\"3\""));
+
+    svg_regioes_destroy(regioes);
+    grafo_destroy(grafo);
+}
+
+void test_svg_regioes_rejeita_parametros_invalidos(void) {
+    SvgRegioes regioes = svg_regioes_create();
+
+    TEST_ASSERT_NOT_NULL(regioes);
+    TEST_ASSERT_EQUAL_INT(0, svg_regioes_add_componentes(NULL, NULL));
+    TEST_ASSERT_EQUAL_INT(0, svg_regioes_add_componentes(regioes, NULL));
+
+    svg_regioes_destroy(regioes);
+}
+
 int main(void) {
     UNITY_BEGIN();
     RUN_TEST(test_svg_render_base_cria_documento_com_quadras_e_vias);
     RUN_TEST(test_svg_render_base_rejeita_caminho_invalido);
     RUN_TEST(test_svg_render_com_percursos_desenha_caminho_colorido);
     RUN_TEST(test_svg_percursos_rejeita_parametros_invalidos);
+    RUN_TEST(test_svg_render_com_anotacoes_desenha_regioes_de_regs);
+    RUN_TEST(test_svg_regioes_rejeita_parametros_invalidos);
     return UNITY_END();
 }
