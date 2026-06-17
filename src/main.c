@@ -124,13 +124,18 @@ static char *make_name_without_extension(const char *filepath) {
     return base_name;
 }
 
-static char *make_svg_filename(const char *geo_file, const char *via_file,
-                               const char *qry_file) {
+static char *make_output_filename(const char *geo_file, const char *via_file,
+                                  const char *qry_file,
+                                  const char *extension) {
     char *geo_name;
     char *via_name = NULL;
     char *qry_name = NULL;
-    char *svg_name;
+    char *output_name;
     size_t length;
+
+    if (extension == NULL) {
+        return NULL;
+    }
 
     geo_name = make_name_without_extension(geo_file);
     if (geo_name == NULL) {
@@ -151,15 +156,15 @@ static char *make_svg_filename(const char *geo_file, const char *via_file,
         }
     }
 
-    length = strlen(geo_name) + strlen(".svg") + 1;
+    length = strlen(geo_name) + strlen(extension) + 1;
     if (qry_name != NULL) {
         length += strlen(qry_name) + 1;
     } else if (via_name != NULL) {
-        length = strlen(via_name) + strlen(".svg") + 1;
+        length = strlen(via_name) + strlen(extension) + 1;
     }
 
-    svg_name = (char *)malloc(length);
-    if (svg_name == NULL) {
+    output_name = (char *)malloc(length);
+    if (output_name == NULL) {
         free(via_name);
         free(qry_name);
         free(geo_name);
@@ -167,17 +172,17 @@ static char *make_svg_filename(const char *geo_file, const char *via_file,
     }
 
     if (qry_name != NULL) {
-        sprintf(svg_name, "%s-%s.svg", geo_name, qry_name);
+        sprintf(output_name, "%s-%s%s", geo_name, qry_name, extension);
     } else if (via_name != NULL) {
-        sprintf(svg_name, "%s.svg", via_name);
+        sprintf(output_name, "%s%s", via_name, extension);
     } else {
-        sprintf(svg_name, "%s.svg", geo_name);
+        sprintf(output_name, "%s%s", geo_name, extension);
     }
 
     free(via_name);
     free(qry_name);
     free(geo_name);
-    return svg_name;
+    return output_name;
 }
 
 static int ensure_output_dir(const char *path) {
@@ -226,9 +231,9 @@ static int gerar_svg_base(const Config config, QuadraStore quadras, Grafo grafo,
         return 0;
     }
 
-    svg_name = make_svg_filename(config_get_geo_file(config),
-                                 config_get_via_file(config),
-                                 config_get_qry_file(config));
+    svg_name = make_output_filename(config_get_geo_file(config),
+                                    config_get_via_file(config),
+                                    config_get_qry_file(config), ".svg");
     if (svg_name == NULL) {
         fprintf(stderr, "ted: nao foi possivel definir o nome do svg\n");
         return 0;
@@ -249,6 +254,41 @@ static int gerar_svg_base(const Config config, QuadraStore quadras, Grafo grafo,
 
     free(svg_path);
     return ok;
+}
+
+static FILE *abrir_relatorio(const Config config) {
+    char *txt_name;
+    char *txt_path;
+    FILE *file;
+
+    if (!ensure_output_dir(config_get_output_dir(config))) {
+        fprintf(stderr, "ted: nao foi possivel criar/acessar diretorio de saida: %s\n",
+                config_get_output_dir(config));
+        return NULL;
+    }
+
+    txt_name = make_output_filename(config_get_geo_file(config),
+                                    config_get_via_file(config),
+                                    config_get_qry_file(config), ".txt");
+    if (txt_name == NULL) {
+        fprintf(stderr, "ted: nao foi possivel definir o nome do txt\n");
+        return NULL;
+    }
+
+    txt_path = join_path(config_get_output_dir(config), txt_name);
+    free(txt_name);
+    if (txt_path == NULL) {
+        fprintf(stderr, "ted: nao foi possivel montar o caminho do txt\n");
+        return NULL;
+    }
+
+    file = fopen(txt_path, "w");
+    if (file == NULL) {
+        fprintf(stderr, "ted: erro ao escrever txt: %s\n", txt_path);
+    }
+
+    free(txt_path);
+    return file;
 }
 
 static Grafo carregar_via(const Config config) {
@@ -329,7 +369,7 @@ static int adicionar_percurso_svg(QryComando comando, Grafo grafo,
 }
 
 static int adicionar_regs_svg(QryComando comando, Grafo grafo,
-                              SvgRegioes regioes) {
+                              SvgRegioes regioes, FILE *relatorio) {
     GrafoComponentes componentes;
     int ok;
 
@@ -342,9 +382,46 @@ static int adicionar_regs_svg(QryComando comando, Grafo grafo,
         return 0;
     }
 
+    if (relatorio != NULL) {
+        fprintf(relatorio, "regs %.6f: %zu componentes conexos\n",
+                qry_comando_get_limite_velocidade(comando),
+                grafo_componentes_count(componentes));
+        if (ferror(relatorio)) {
+            grafo_componentes_destroy(componentes);
+            return 0;
+        }
+    }
+
     ok = svg_regioes_add_componentes(regioes, componentes);
     grafo_componentes_destroy(componentes);
     return ok;
+}
+
+static int reportar_origem(FILE *relatorio, QryComando comando,
+                           Registradores registradores) {
+    const char *reg_nome;
+    const char *cep;
+    int indice;
+    double x;
+    double y;
+
+    if (relatorio == NULL) {
+        return 1;
+    }
+
+    reg_nome = qry_comando_get_reg1(comando);
+    cep = qry_comando_get_cep(comando);
+    indice = registradores_parse_nome(reg_nome);
+    if (indice < 0 ||
+        !registradores_get(registradores, indice, &x, &y)) {
+        return 0;
+    }
+
+    fprintf(relatorio, "@o? %s %s %c %.6f: %.6f %.6f\n",
+            reg_nome, cep != NULL ? cep : "",
+            qry_comando_get_face(comando), qry_comando_get_num(comando),
+            x, y);
+    return !ferror(relatorio);
 }
 
 static int adicionar_exp_svg(QryComando comando, Grafo grafo,
@@ -370,7 +447,8 @@ static int executar_qry_para_svg(QryComandos comandos, QuadraStore quadras,
                                  Grafo grafo, Registradores registradores,
                                  SvgPercursos percursos,
                                  SvgRegioes regioes,
-                                 SvgExpansoes expansoes) {
+                                 SvgExpansoes expansoes,
+                                 FILE *relatorio) {
     size_t count;
 
     if (comandos == NULL) {
@@ -393,7 +471,8 @@ static int executar_qry_para_svg(QryComandos comandos, QuadraStore quadras,
         tipo = qry_comando_get_tipo(comando);
         if (tipo == QRY_COMANDO_ORIGEM) {
             if (!qry_executor_resolve_origem(comando, quadras,
-                                             registradores)) {
+                                             registradores) ||
+                !reportar_origem(relatorio, comando, registradores)) {
                 return 0;
             }
         } else if (tipo == QRY_COMANDO_MVM) {
@@ -401,7 +480,7 @@ static int executar_qry_para_svg(QryComandos comandos, QuadraStore quadras,
                 return 0;
             }
         } else if (tipo == QRY_COMANDO_REGS) {
-            if (!adicionar_regs_svg(comando, grafo, regioes)) {
+            if (!adicionar_regs_svg(comando, grafo, regioes, relatorio)) {
                 return 0;
             }
         } else if (tipo == QRY_COMANDO_EXP) {
@@ -427,6 +506,7 @@ int main(int argc, char *argv[]) {
     SvgPercursos percursos = NULL;
     SvgRegioes regioes = NULL;
     SvgExpansoes expansoes = NULL;
+    FILE *relatorio = NULL;
     int status = 1;
 
     config = config_create();
@@ -462,6 +542,11 @@ int main(int argc, char *argv[]) {
         goto cleanup;
     }
 
+    relatorio = abrir_relatorio(config);
+    if (relatorio == NULL) {
+        goto cleanup;
+    }
+
     if (comandos != NULL) {
         registradores = registradores_create();
         if (registradores == NULL) {
@@ -488,7 +573,8 @@ int main(int argc, char *argv[]) {
         }
 
         if (!executar_qry_para_svg(comandos, quadras, grafo, registradores,
-                                   percursos, regioes, expansoes)) {
+                                   percursos, regioes, expansoes,
+                                   relatorio)) {
             fprintf(stderr, "ted: erro ao executar consultas do qry\n");
             goto cleanup;
         }
@@ -502,6 +588,11 @@ int main(int argc, char *argv[]) {
     status = 0;
 
 cleanup:
+    if (relatorio != NULL) {
+        if (fclose(relatorio) != 0 && status == 0) {
+            status = 1;
+        }
+    }
     svg_expansoes_destroy(expansoes);
     svg_regioes_destroy(regioes);
     svg_percursos_destroy(percursos);
