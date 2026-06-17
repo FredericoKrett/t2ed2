@@ -339,15 +339,89 @@ static QryComandos carregar_qry(const Config config) {
     return comandos;
 }
 
+static const char *criterio_texto(CaminhoCriterio criterio) {
+    return criterio == CAMINHO_CRITERIO_TEMPO ? "mais rapido" : "mais curto";
+}
+
+static int reportar_caminho(FILE *relatorio, Grafo grafo, Caminho caminho) {
+    CaminhoCriterio criterio;
+    size_t count;
+
+    if (relatorio == NULL) {
+        return 1;
+    }
+    if (grafo == NULL || caminho == NULL) {
+        return 0;
+    }
+
+    criterio = caminho_get_criterio(caminho);
+    fprintf(relatorio, "percurso %s: ", criterio_texto(criterio));
+    if (!caminho_existe(caminho)) {
+        fputs("destino inacessivel\n", relatorio);
+        return !ferror(relatorio);
+    }
+
+    fprintf(relatorio, "custo %.6f, %zu arestas\n",
+            caminho_get_custo(caminho), caminho_get_aresta_count(caminho));
+
+    count = caminho_get_aresta_count(caminho);
+    for (size_t i = 0; i < count; i++) {
+        GrafoAresta aresta = caminho_get_aresta(caminho, i);
+        GrafoVertice origem = grafo_aresta_get_origem(aresta);
+        GrafoVertice destino = grafo_aresta_get_destino(aresta);
+        const char *origem_id = grafo_get_vertice_id(grafo, origem);
+        const char *destino_id = grafo_get_vertice_id(grafo, destino);
+        const char *nome = grafo_aresta_get_nome(aresta);
+
+        fprintf(relatorio,
+                "  %zu. %s -> %s por %s (cmp %.6f, vm %.6f)\n",
+                i + 1,
+                origem_id != NULL ? origem_id : "",
+                destino_id != NULL ? destino_id : "",
+                nome != NULL ? nome : "",
+                grafo_aresta_get_cmp(aresta),
+                grafo_aresta_get_vm(aresta));
+        if (ferror(relatorio)) {
+            return 0;
+        }
+    }
+
+    return !ferror(relatorio);
+}
+
+static int reportar_percurso(FILE *relatorio, QryComando comando,
+                             Grafo grafo, Caminho curto, Caminho rapido) {
+    if (relatorio == NULL) {
+        return 1;
+    }
+
+    fprintf(relatorio, "p? %s %s\n",
+            qry_comando_get_reg1(comando),
+            qry_comando_get_reg2(comando));
+    if (ferror(relatorio)) {
+        return 0;
+    }
+
+    return reportar_caminho(relatorio, grafo, curto) &&
+           reportar_caminho(relatorio, grafo, rapido);
+}
+
 static int adicionar_percurso_svg(QryComando comando, Grafo grafo,
                                   Registradores registradores,
-                                  SvgPercursos percursos) {
+                                  SvgPercursos percursos,
+                                  FILE *relatorio) {
     Caminho curto = NULL;
     Caminho rapido = NULL;
 
     if (grafo == NULL ||
         !qry_executor_calcular_percurso(comando, grafo, registradores,
                                         &curto, &rapido)) {
+        return 0;
+    }
+
+    if (!reportar_percurso(relatorio, comando, grafo, curto, rapido)) {
+        caminho_destroy(curto);
+        caminho_destroy(rapido);
         return 0;
     }
 
@@ -489,7 +563,7 @@ static int executar_qry_para_svg(QryComandos comandos, QuadraStore quadras,
             }
         } else if (tipo == QRY_COMANDO_PERCURSO &&
                    !adicionar_percurso_svg(comando, grafo, registradores,
-                                           percursos)) {
+                                           percursos, relatorio)) {
             return 0;
         }
     }
