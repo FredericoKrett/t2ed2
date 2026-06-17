@@ -32,6 +32,19 @@ struct grafo {
     size_t aresta_count;
 };
 
+struct grafo_componente {
+    double min_x;
+    double min_y;
+    double max_x;
+    double max_y;
+    int has_item;
+};
+
+struct grafo_componentes {
+    struct grafo_componente *items;
+    size_t count;
+};
+
 static char *copy_text(const char *text) {
     if (text == NULL) {
         return NULL;
@@ -98,6 +111,57 @@ static void destroy_aresta(struct grafo_aresta *aresta) {
     free(aresta->lesq);
     free(aresta->nome);
     free(aresta);
+}
+
+static GrafoVertice dsu_find(GrafoVertice *parent, GrafoVertice vertice) {
+    if (parent[vertice] != vertice) {
+        parent[vertice] = dsu_find(parent, parent[vertice]);
+    }
+    return parent[vertice];
+}
+
+static void dsu_union(GrafoVertice *parent, int *rank, GrafoVertice a,
+                      GrafoVertice b) {
+    GrafoVertice root_a = dsu_find(parent, a);
+    GrafoVertice root_b = dsu_find(parent, b);
+
+    if (root_a == root_b) {
+        return;
+    }
+
+    if (rank[root_a] < rank[root_b]) {
+        parent[root_a] = root_b;
+    } else if (rank[root_a] > rank[root_b]) {
+        parent[root_b] = root_a;
+    } else {
+        parent[root_b] = root_a;
+        rank[root_a]++;
+    }
+}
+
+static void componente_include_point(struct grafo_componente *componente,
+                                     double x, double y) {
+    if (!componente->has_item) {
+        componente->min_x = x;
+        componente->min_y = y;
+        componente->max_x = x;
+        componente->max_y = y;
+        componente->has_item = 1;
+        return;
+    }
+
+    if (x < componente->min_x) {
+        componente->min_x = x;
+    }
+    if (y < componente->min_y) {
+        componente->min_y = y;
+    }
+    if (x > componente->max_x) {
+        componente->max_x = x;
+    }
+    if (y > componente->max_y) {
+        componente->max_y = y;
+    }
 }
 
 Grafo grafo_create(size_t capacity_hint) {
@@ -304,6 +368,139 @@ int grafo_atualizar_vm_regiao(Grafo grafo_ref, double vm, double x, double y,
     }
 
     return atualizadas;
+}
+
+GrafoComponentes grafo_calcular_componentes_lentos(Grafo grafo_ref,
+                                                   double limite_vm) {
+    struct grafo *grafo = (struct grafo *)grafo_ref;
+    struct grafo_componentes *componentes;
+    GrafoVertice *parent = NULL;
+    int *rank = NULL;
+    int *ativo = NULL;
+    int *component_index = NULL;
+
+    if (grafo == NULL || limite_vm < 0.0) {
+        return NULL;
+    }
+
+    componentes = (struct grafo_componentes *)calloc(
+        1, sizeof(struct grafo_componentes));
+    if (componentes == NULL) {
+        return NULL;
+    }
+
+    if (grafo->vertice_count == 0) {
+        return componentes;
+    }
+
+    parent = (GrafoVertice *)malloc(grafo->vertice_count * sizeof(GrafoVertice));
+    rank = (int *)calloc(grafo->vertice_count, sizeof(int));
+    ativo = (int *)calloc(grafo->vertice_count, sizeof(int));
+    component_index = (int *)malloc(grafo->vertice_count * sizeof(int));
+    componentes->items = (struct grafo_componente *)calloc(
+        grafo->vertice_count, sizeof(struct grafo_componente));
+    if (parent == NULL || rank == NULL || ativo == NULL ||
+        component_index == NULL || componentes->items == NULL) {
+        grafo_componentes_destroy(componentes);
+        free(parent);
+        free(rank);
+        free(ativo);
+        free(component_index);
+        return NULL;
+    }
+
+    for (size_t i = 0; i < grafo->vertice_count; i++) {
+        parent[i] = (GrafoVertice)i;
+        component_index[i] = -1;
+    }
+
+    for (size_t i = 0; i < grafo->vertice_count; i++) {
+        for (struct grafo_aresta *aresta = grafo->vertices[i].arestas_saida;
+             aresta != NULL;
+             aresta = aresta->next) {
+            if (aresta->vm < limite_vm) {
+                ativo[aresta->origem] = 1;
+                ativo[aresta->destino] = 1;
+                dsu_union(parent, rank, aresta->origem, aresta->destino);
+            }
+        }
+    }
+
+    for (size_t i = 0; i < grafo->vertice_count; i++) {
+        GrafoVertice root;
+        int indice;
+
+        if (!ativo[i]) {
+            continue;
+        }
+
+        root = dsu_find(parent, (GrafoVertice)i);
+        indice = component_index[root];
+        if (indice < 0) {
+            indice = (int)componentes->count;
+            component_index[root] = indice;
+            componentes->count++;
+        }
+
+        componente_include_point(&componentes->items[indice],
+                                 grafo->vertices[i].x,
+                                 grafo->vertices[i].y);
+    }
+
+    free(parent);
+    free(rank);
+    free(ativo);
+    free(component_index);
+    return componentes;
+}
+
+size_t grafo_componentes_count(GrafoComponentes componentes_ref) {
+    struct grafo_componentes *componentes =
+        (struct grafo_componentes *)componentes_ref;
+    return componentes != NULL ? componentes->count : 0;
+}
+
+int grafo_componentes_get_bbox(GrafoComponentes componentes_ref, size_t indice,
+                               double *out_x, double *out_y,
+                               double *out_w, double *out_h) {
+    struct grafo_componentes *componentes =
+        (struct grafo_componentes *)componentes_ref;
+    struct grafo_componente *componente;
+
+    if (componentes == NULL || indice >= componentes->count) {
+        return 0;
+    }
+
+    componente = &componentes->items[indice];
+    if (!componente->has_item) {
+        return 0;
+    }
+
+    if (out_x != NULL) {
+        *out_x = componente->min_x;
+    }
+    if (out_y != NULL) {
+        *out_y = componente->min_y;
+    }
+    if (out_w != NULL) {
+        *out_w = componente->max_x - componente->min_x;
+    }
+    if (out_h != NULL) {
+        *out_h = componente->max_y - componente->min_y;
+    }
+
+    return 1;
+}
+
+void grafo_componentes_destroy(GrafoComponentes componentes_ref) {
+    struct grafo_componentes *componentes =
+        (struct grafo_componentes *)componentes_ref;
+    if (componentes == NULL) {
+        return;
+    }
+
+    free(componentes->items);
+    free(componentes);
 }
 
 GrafoVertice grafo_aresta_get_origem(GrafoAresta aresta_ref) {

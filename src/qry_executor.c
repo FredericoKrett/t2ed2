@@ -90,6 +90,16 @@ int qry_executor_aplicar_mvm(QryComando comando, Grafo grafo) {
                                      qry_comando_get_h(comando)) >= 0;
 }
 
+GrafoComponentes qry_executor_calcular_regs(QryComando comando, Grafo grafo) {
+    if (comando == NULL || grafo == NULL ||
+        qry_comando_get_tipo(comando) != QRY_COMANDO_REGS) {
+        return NULL;
+    }
+
+    return grafo_calcular_componentes_lentos(
+        grafo, qry_comando_get_limite_velocidade(comando));
+}
+
 int qry_executor_calcular_percurso(QryComando comando, Grafo grafo,
                                    Registradores registradores,
                                    Caminho *out_curto,

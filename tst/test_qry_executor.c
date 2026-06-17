@@ -224,6 +224,44 @@ void test_qry_executor_aplicar_mvm_atualiza_arestas_na_regiao(void) {
     grafo_destroy(grafo);
 }
 
+void test_qry_executor_calcular_regs_retorna_componentes_lentos(void) {
+    Grafo grafo = grafo_create(3);
+    GrafoVertice v1 = grafo_add_vertice(grafo, "v1", 0.0, 0.0);
+    GrafoVertice v2 = grafo_add_vertice(grafo, "v2", 10.0, 0.0);
+    GrafoVertice v3 = grafo_add_vertice(grafo, "v3", 20.0, 0.0);
+    QryComandos comandos;
+    GrafoComponentes componentes;
+    double x = 0.0;
+    double y = 0.0;
+    double w = 0.0;
+    double h = 0.0;
+
+    TEST_ASSERT_NOT_NULL(grafo_add_aresta(grafo, v1, v2, "-", "-",
+                                          10.0, 2.0, "Rua_A"));
+    TEST_ASSERT_NOT_NULL(grafo_add_aresta(grafo, v2, v3, "-", "-",
+                                          10.0, 8.0, "Rua_B"));
+
+    write_file("regs 5.0\n");
+    comandos = qry_parser_parse_file(TEST_QRY_EXECUTOR_FILE);
+
+    TEST_ASSERT_NOT_NULL(comandos);
+    componentes = qry_executor_calcular_regs(qry_comandos_get(comandos, 0),
+                                             grafo);
+
+    TEST_ASSERT_NOT_NULL(componentes);
+    TEST_ASSERT_EQUAL_INT(1, (int)grafo_componentes_count(componentes));
+    TEST_ASSERT_EQUAL_INT(1, grafo_componentes_get_bbox(componentes, 0,
+                                                        &x, &y, &w, &h));
+    assert_double_near(0.0, x);
+    assert_double_near(0.0, y);
+    assert_double_near(10.0, w);
+    assert_double_near(0.0, h);
+
+    grafo_componentes_destroy(componentes);
+    qry_comandos_destroy(comandos);
+    grafo_destroy(grafo);
+}
+
 void test_qry_executor_calcular_percurso_retorna_curto_e_rapido(void) {
     struct grafo_rotas rotas = criar_grafo_com_rotas();
     Registradores registradores = registradores_create();
@@ -314,6 +352,7 @@ int main(void) {
     RUN_TEST(test_qry_executor_resolve_origens_rejeita_referencias_invalidas);
     RUN_TEST(test_qry_executor_resolve_origens_rejeita_parametros_invalidos);
     RUN_TEST(test_qry_executor_aplicar_mvm_atualiza_arestas_na_regiao);
+    RUN_TEST(test_qry_executor_calcular_regs_retorna_componentes_lentos);
     RUN_TEST(test_qry_executor_calcular_percurso_retorna_curto_e_rapido);
     RUN_TEST(test_qry_executor_calcular_percurso_rejeita_registrador_ausente);
     RUN_TEST(test_qry_executor_calcular_percurso_rejeita_comando_invalido);

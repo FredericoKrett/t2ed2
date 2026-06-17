@@ -31,6 +31,11 @@ typedef int GrafoVertice;
 typedef void *GrafoAresta;
 
 /**
+ * @brief Resultado opaco de componentes conexos calculados sobre o grafo.
+ */
+typedef void *GrafoComponentes;
+
+/**
  * @brief Funcao chamada ao visitar arestas de saida de um vertice.
  */
 typedef void (*GrafoArestaVisitor)(Grafo grafo, GrafoAresta aresta,
@@ -161,6 +166,53 @@ void grafo_for_each_aresta_saida(Grafo grafo, GrafoVertice origem,
  */
 int grafo_atualizar_vm_regiao(Grafo grafo, double vm, double x, double y,
                               double w, double h);
+
+/**
+ * @brief Calcula componentes formados por arestas com velocidade insuficiente.
+ *
+ * Seleciona arestas com velocidade media menor que limite_vm e calcula os
+ * componentes conexos considerando essas arestas sem direcao. Vertices que nao
+ * pertencem a nenhuma aresta selecionada nao formam componentes no resultado.
+ *
+ * @param grafo Grafo consultado.
+ * @param limite_vm Limite de velocidade usado para selecionar arestas lentas.
+ * @return Resultado opaco com os componentes, ou NULL em caso de parametro
+ *         invalido ou falha de alocacao.
+ */
+GrafoComponentes grafo_calcular_componentes_lentos(Grafo grafo,
+                                                   double limite_vm);
+
+/**
+ * @brief Retorna a quantidade de componentes calculados.
+ *
+ * @param componentes Resultado criado por grafo_calcular_componentes_lentos.
+ * @return Quantidade de componentes, ou 0 se o resultado for invalido.
+ */
+size_t grafo_componentes_count(GrafoComponentes componentes);
+
+/**
+ * @brief Copia o retangulo envolvente de um componente.
+ *
+ * O retangulo envolve os vertices pertencentes ao componente lento.
+ *
+ * @param componentes Resultado consultado.
+ * @param indice Indice do componente.
+ * @param out_x Ponteiro que recebera a coordenada x minima.
+ * @param out_y Ponteiro que recebera a coordenada y minima.
+ * @param out_w Ponteiro que recebera a largura.
+ * @param out_h Ponteiro que recebera a altura.
+ * @return 1 se o componente existe; 0 caso contrario.
+ */
+int grafo_componentes_get_bbox(GrafoComponentes componentes, size_t indice,
+                               double *out_x, double *out_y,
+                               double *out_w, double *out_h);
+
+/**
+ * @brief Libera o resultado de componentes conexos.
+ *
+ * @param componentes Resultado criado por grafo_calcular_componentes_lentos.
+ */
+void grafo_componentes_destroy(GrafoComponentes componentes);
 
 /**
  * @brief Retorna o vertice de origem da aresta.

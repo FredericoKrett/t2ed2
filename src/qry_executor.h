@@ -66,6 +66,20 @@ int qry_executor_resolve_origens(QryComandos comandos, QuadraStore quadras,
 int qry_executor_aplicar_mvm(QryComando comando, Grafo grafo);
 
 /**
+ * @brief Calcula os componentes de trechos lentos de um comando regs.
+ *
+ * Usa o limite de velocidade do comando para selecionar arestas do grafo com
+ * velocidade media insuficiente. O resultado pertence ao chamador, que deve
+ * libera-lo com grafo_componentes_destroy.
+ *
+ * @param comando Comando regs obtido do parser.
+ * @param grafo Grafo viario consultado.
+ * @return Componentes calculados, ou NULL em caso de parametro invalido,
+ *         comando de outro tipo ou falha de alocacao.
+ */
+GrafoComponentes qry_executor_calcular_regs(QryComando comando, Grafo grafo);
+
+/**
  * @brief Calcula os dois percursos de um comando p?.
  *
  * Usa os registradores textuais do comando para recuperar as coordenadas de
