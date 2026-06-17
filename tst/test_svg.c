@@ -145,7 +145,8 @@ void test_svg_render_com_anotacoes_desenha_regioes_de_regs(void) {
     grafo_componentes_destroy(componentes);
 
     TEST_ASSERT_EQUAL_INT(1, svg_render_com_anotacoes(TEST_SVG_FILE, NULL,
-                                                      grafo, NULL, regioes));
+                                                      grafo, NULL, regioes,
+                                                      NULL));
     TEST_ASSERT_TRUE(file_contains("<svg:g id=\"regs\""));
     TEST_ASSERT_TRUE(file_contains("fill-opacity=\"0.500000\""));
     TEST_ASSERT_TRUE(file_contains("stroke-width=\"3\""));
@@ -164,6 +165,40 @@ void test_svg_regioes_rejeita_parametros_invalidos(void) {
     svg_regioes_destroy(regioes);
 }
 
+void test_svg_render_com_anotacoes_desenha_expansoes(void) {
+    Grafo grafo = grafo_create(2);
+    GrafoVertice origem;
+    GrafoVertice destino;
+    GrafoArestas arestas;
+    SvgExpansoes expansoes = svg_expansoes_create();
+
+    TEST_ASSERT_NOT_NULL(grafo);
+    TEST_ASSERT_NOT_NULL(expansoes);
+
+    origem = grafo_add_vertice(grafo, "v1", 0.0, 0.0);
+    destino = grafo_add_vertice(grafo, "v2", 100.0, 0.0);
+    TEST_ASSERT_NOT_EQUAL(-1, origem);
+    TEST_ASSERT_NOT_EQUAL(-1, destino);
+    TEST_ASSERT_NOT_NULL(grafo_add_aresta(grafo, origem, destino, "-", "-",
+                                          100.0, 2.0, "Rua_Lenta"));
+
+    arestas = grafo_aplicar_expansao_agm(grafo, 5.0);
+    TEST_ASSERT_NOT_NULL(arestas);
+    TEST_ASSERT_EQUAL_INT(1, svg_expansoes_add_arestas(expansoes, grafo,
+                                                       arestas));
+    grafo_arestas_destroy(arestas);
+
+    TEST_ASSERT_EQUAL_INT(1, svg_render_com_anotacoes(TEST_SVG_FILE, NULL,
+                                                      grafo, NULL, NULL,
+                                                      expansoes));
+    TEST_ASSERT_TRUE(file_contains("<svg:g id=\"exp\""));
+    TEST_ASSERT_TRUE(file_contains("stroke=\"red\""));
+    TEST_ASSERT_TRUE(file_contains("stroke-width=\"5\""));
+
+    svg_expansoes_destroy(expansoes);
+    grafo_destroy(grafo);
+}
+
 int main(void) {
     UNITY_BEGIN();
     RUN_TEST(test_svg_render_base_cria_documento_com_quadras_e_vias);
@@ -172,5 +207,6 @@ int main(void) {
     RUN_TEST(test_svg_percursos_rejeita_parametros_invalidos);
     RUN_TEST(test_svg_render_com_anotacoes_desenha_regioes_de_regs);
     RUN_TEST(test_svg_regioes_rejeita_parametros_invalidos);
+    RUN_TEST(test_svg_render_com_anotacoes_desenha_expansoes);
     return UNITY_END();
 }

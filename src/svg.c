@@ -52,6 +52,19 @@ struct svg_regioes {
     size_t count;
 };
 
+struct svg_expansao_node {
+    double x1;
+    double y1;
+    double x2;
+    double y2;
+    struct svg_expansao_node *next;
+};
+
+struct svg_expansoes {
+    struct svg_expansao_node *head;
+    struct svg_expansao_node *tail;
+};
+
 static char *copy_text(const char *text) {
     char *copy;
     size_t length;
@@ -211,6 +224,91 @@ void svg_regioes_destroy(SvgRegioes regioes_ref) {
     }
 
     free(regioes);
+}
+
+SvgExpansoes svg_expansoes_create(void) {
+    return calloc(1, sizeof(struct svg_expansoes));
+}
+
+static int svg_expansoes_add_segmento(SvgExpansoes expansoes_ref,
+                                      double x1, double y1,
+                                      double x2, double y2) {
+    struct svg_expansoes *expansoes =
+        (struct svg_expansoes *)expansoes_ref;
+    struct svg_expansao_node *node;
+
+    if (expansoes == NULL) {
+        return 0;
+    }
+
+    node = (struct svg_expansao_node *)calloc(1,
+                                              sizeof(struct svg_expansao_node));
+    if (node == NULL) {
+        return 0;
+    }
+
+    node->x1 = x1;
+    node->y1 = y1;
+    node->x2 = x2;
+    node->y2 = y2;
+
+    if (expansoes->tail == NULL) {
+        expansoes->head = node;
+        expansoes->tail = node;
+    } else {
+        expansoes->tail->next = node;
+        expansoes->tail = node;
+    }
+
+    return 1;
+}
+
+int svg_expansoes_add_arestas(SvgExpansoes expansoes_ref, Grafo grafo,
+                              GrafoArestas arestas) {
+    size_t count;
+
+    if (expansoes_ref == NULL || grafo == NULL || arestas == NULL) {
+        return 0;
+    }
+
+    count = grafo_arestas_count(arestas);
+    for (size_t i = 0; i < count; i++) {
+        GrafoAresta aresta = grafo_arestas_get(arestas, i);
+        double x1;
+        double y1;
+        double x2;
+        double y2;
+
+        if (aresta == NULL ||
+            !grafo_get_vertice_coords(grafo, grafo_aresta_get_origem(aresta),
+                                      &x1, &y1) ||
+            !grafo_get_vertice_coords(grafo, grafo_aresta_get_destino(aresta),
+                                      &x2, &y2) ||
+            !svg_expansoes_add_segmento(expansoes_ref, x1, y1, x2, y2)) {
+            return 0;
+        }
+    }
+
+    return 1;
+}
+
+void svg_expansoes_destroy(SvgExpansoes expansoes_ref) {
+    struct svg_expansoes *expansoes =
+        (struct svg_expansoes *)expansoes_ref;
+    struct svg_expansao_node *node;
+
+    if (expansoes == NULL) {
+        return;
+    }
+
+    node = expansoes->head;
+    while (node != NULL) {
+        struct svg_expansao_node *next = node->next;
+        free(node);
+        node = next;
+    }
+
+    free(expansoes);
 }
 
 static void bbox_include_point(struct svg_bbox *bbox, double x, double y) {
@@ -399,6 +497,33 @@ static void draw_regioes(SvgRegioes regioes_ref,
     }
 }
 
+static void draw_expansoes(SvgExpansoes expansoes_ref,
+                           struct svg_file_context *ctx) {
+    struct svg_expansoes *expansoes =
+        (struct svg_expansoes *)expansoes_ref;
+    struct svg_expansao_node *node;
+
+    if (expansoes == NULL || expansoes->head == NULL || !ctx->ok) {
+        return;
+    }
+
+    fputs("<svg:g id=\"exp\">\n", ctx->file);
+    node = expansoes->head;
+    while (node != NULL) {
+        fprintf(ctx->file,
+                "  <svg:line x1=\"%.6f\" y1=\"%.6f\" x2=\"%.6f\" "
+                "y2=\"%.6f\" stroke=\"red\" stroke-width=\"5\" "
+                "stroke-opacity=\"1.000000\" />\n",
+                node->x1, node->y1, node->x2, node->y2);
+        node = node->next;
+    }
+    fputs("</svg:g>\n", ctx->file);
+
+    if (ferror(ctx->file)) {
+        ctx->ok = 0;
+    }
+}
+
 static void draw_quadra(Quadra quadra, void *context) {
     struct svg_file_context *ctx = (struct svg_file_context *)context;
     FILE *file = ctx->file;
@@ -519,17 +644,19 @@ static void draw_quadras(QuadraStore quadras, struct svg_file_context *ctx) {
 }
 
 int svg_render_base(const char *filepath, QuadraStore quadras, Grafo grafo) {
-    return svg_render_com_anotacoes(filepath, quadras, grafo, NULL, NULL);
+    return svg_render_com_anotacoes(filepath, quadras, grafo, NULL, NULL,
+                                    NULL);
 }
 
 int svg_render_com_percursos(const char *filepath, QuadraStore quadras,
                              Grafo grafo, SvgPercursos percursos) {
-    return svg_render_com_anotacoes(filepath, quadras, grafo, percursos, NULL);
+    return svg_render_com_anotacoes(filepath, quadras, grafo, percursos, NULL,
+                                    NULL);
 }
 
 int svg_render_com_anotacoes(const char *filepath, QuadraStore quadras,
                              Grafo grafo, SvgPercursos percursos,
-                             SvgRegioes regioes) {
+                             SvgRegioes regioes, SvgExpansoes expansoes) {
     struct svg_bbox bbox = {0.0, 0.0, 0.0, 0.0, 0};
     struct svg_file_context ctx;
 
@@ -566,6 +693,7 @@ int svg_render_com_anotacoes(const char *filepath, QuadraStore quadras,
     draw_grafo(grafo, &ctx);
     draw_quadras(quadras, &ctx);
     draw_regioes(regioes, &ctx);
+    draw_expansoes(expansoes, &ctx);
     draw_percursos(grafo, percursos, &ctx);
     fputs("</svg:svg>\n", ctx.file);
 

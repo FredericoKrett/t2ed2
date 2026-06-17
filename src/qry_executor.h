@@ -80,6 +80,21 @@ int qry_executor_aplicar_mvm(QryComando comando, Grafo grafo);
 GrafoComponentes qry_executor_calcular_regs(QryComando comando, Grafo grafo);
 
 /**
+ * @brief Aplica a expansao de velocidade de um comando exp.
+ *
+ * Usa o limite de velocidade do comando para selecionar, dentro da arvore
+ * geradora minima do grafo, as arestas lentas que devem receber aumento de
+ * 50% na velocidade media. O resultado pertence ao chamador e deve ser
+ * liberado com grafo_arestas_destroy.
+ *
+ * @param comando Comando exp obtido do parser.
+ * @param grafo Grafo viario alterado.
+ * @return Lista de arestas alteradas, possivelmente vazia, ou NULL em caso de
+ *         parametro invalido, comando de outro tipo ou falha de alocacao.
+ */
+GrafoArestas qry_executor_aplicar_exp(QryComando comando, Grafo grafo);
+
+/**
  * @brief Calcula os dois percursos de um comando p?.
  *
  * Usa os registradores textuais do comando para recuperar as coordenadas de

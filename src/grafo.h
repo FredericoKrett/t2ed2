@@ -36,6 +36,11 @@ typedef void *GrafoAresta;
 typedef void *GrafoComponentes;
 
 /**
+ * @brief Lista opaca de arestas selecionadas em uma operacao sobre o grafo.
+ */
+typedef void *GrafoArestas;
+
+/**
  * @brief Funcao chamada ao visitar arestas de saida de um vertice.
  */
 typedef void (*GrafoArestaVisitor)(Grafo grafo, GrafoAresta aresta,
@@ -213,6 +218,51 @@ int grafo_componentes_get_bbox(GrafoComponentes componentes, size_t indice,
  * @param componentes Resultado criado por grafo_calcular_componentes_lentos.
  */
 void grafo_componentes_destroy(GrafoComponentes componentes);
+
+/**
+ * @brief Aplica a expansao de velocidade sobre arestas lentas da AGM.
+ *
+ * Calcula a arvore geradora minima usando o comprimento das arestas como peso
+ * e tratando as ligacoes como nao direcionadas apenas para essa selecao. Entre
+ * as arestas da AGM, seleciona aquelas com velocidade media menor que
+ * limite_vm, aumenta suas velocidades em 50% e retorna a lista de arestas
+ * alteradas. Se o grafo nao for conexo, a selecao corresponde a floresta
+ * geradora minima dos componentes existentes.
+ *
+ * A lista retornada pertence ao chamador e deve ser liberada com
+ * grafo_arestas_destroy. As arestas armazenadas pertencem ao grafo original.
+ *
+ * @param grafo Grafo alterado.
+ * @param limite_vm Limite de velocidade usado para selecionar arestas lentas.
+ * @return Lista de arestas alteradas, possivelmente vazia, ou NULL em caso de
+ *         parametro invalido ou falha de alocacao.
+ */
+GrafoArestas grafo_aplicar_expansao_agm(Grafo grafo, double limite_vm);
+
+/**
+ * @brief Retorna a quantidade de arestas armazenadas na lista.
+ *
+ * @param arestas Lista consultada.
+ * @return Quantidade de arestas, ou 0 se a lista for invalida.
+ */
+size_t grafo_arestas_count(GrafoArestas arestas);
+
+/**
+ * @brief Retorna uma aresta selecionada por indice.
+ *
+ * @param arestas Lista consultada.
+ * @param indice Posicao da aresta.
+ * @return Aresta pertencente ao grafo original, ou NULL se o indice for
+ *         invalido.
+ */
+GrafoAresta grafo_arestas_get(GrafoArestas arestas, size_t indice);
+
+/**
+ * @brief Libera uma lista de arestas selecionadas.
+ *
+ * @param arestas Lista criada por grafo_aplicar_expansao_agm.
+ */
+void grafo_arestas_destroy(GrafoArestas arestas);
 
 /**
  * @brief Retorna o vertice de origem da aresta.

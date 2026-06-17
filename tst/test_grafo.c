@@ -25,6 +25,18 @@ static void contar_aresta(Grafo grafo, GrafoAresta aresta, void *context) {
     ctx->ultima_aresta = aresta;
 }
 
+static int lista_contem_aresta(GrafoArestas arestas, GrafoAresta procurada) {
+    size_t count = grafo_arestas_count(arestas);
+
+    for (size_t i = 0; i < count; i++) {
+        if (grafo_arestas_get(arestas, i) == procurada) {
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
 void setUp(void) {
 }
 
@@ -203,6 +215,46 @@ void test_grafo_calcular_componentes_lentos_retorna_bboxes(void) {
     TEST_ASSERT_NULL(grafo_calcular_componentes_lentos(NULL, 5.0));
 }
 
+void test_grafo_aplicar_expansao_agm_altera_apenas_lentas_da_agm(void) {
+    Grafo grafo = grafo_create(4);
+    GrafoVertice v1 = grafo_add_vertice(grafo, "v1", 0.0, 0.0);
+    GrafoVertice v2 = grafo_add_vertice(grafo, "v2", 10.0, 0.0);
+    GrafoVertice v3 = grafo_add_vertice(grafo, "v3", 20.0, 0.0);
+    GrafoVertice v4 = grafo_add_vertice(grafo, "v4", 30.0, 0.0);
+    GrafoAresta lenta_agm_1 = grafo_add_aresta(grafo, v1, v2, "-", "-",
+                                               1.0, 2.0, "Rua_A");
+    GrafoAresta rapida_agm = grafo_add_aresta(grafo, v2, v3, "-", "-",
+                                              1.0, 10.0, "Rua_B");
+    GrafoAresta lenta_agm_2 = grafo_add_aresta(grafo, v3, v4, "-", "-",
+                                               1.0, 3.0, "Rua_C");
+    GrafoAresta lenta_fora_agm = grafo_add_aresta(grafo, v1, v3, "-", "-",
+                                                  5.0, 1.0, "Rua_D");
+    GrafoArestas selecionadas;
+
+    TEST_ASSERT_NOT_NULL(lenta_agm_1);
+    TEST_ASSERT_NOT_NULL(rapida_agm);
+    TEST_ASSERT_NOT_NULL(lenta_agm_2);
+    TEST_ASSERT_NOT_NULL(lenta_fora_agm);
+
+    selecionadas = grafo_aplicar_expansao_agm(grafo, 5.0);
+
+    TEST_ASSERT_NOT_NULL(selecionadas);
+    TEST_ASSERT_EQUAL_INT(2, (int)grafo_arestas_count(selecionadas));
+    TEST_ASSERT_TRUE(lista_contem_aresta(selecionadas, lenta_agm_1));
+    TEST_ASSERT_TRUE(lista_contem_aresta(selecionadas, lenta_agm_2));
+    TEST_ASSERT_FALSE(lista_contem_aresta(selecionadas, rapida_agm));
+    TEST_ASSERT_FALSE(lista_contem_aresta(selecionadas, lenta_fora_agm));
+    assert_double_near(3.0, grafo_aresta_get_vm(lenta_agm_1));
+    assert_double_near(10.0, grafo_aresta_get_vm(rapida_agm));
+    assert_double_near(4.5, grafo_aresta_get_vm(lenta_agm_2));
+    assert_double_near(1.0, grafo_aresta_get_vm(lenta_fora_agm));
+
+    grafo_arestas_destroy(selecionadas);
+    grafo_destroy(grafo);
+
+    TEST_ASSERT_NULL(grafo_aplicar_expansao_agm(NULL, 5.0));
+}
+
 int main(void) {
     UNITY_BEGIN();
     RUN_TEST(test_grafo_add_vertice_busca_e_coordenadas);
@@ -212,5 +264,6 @@ int main(void) {
     RUN_TEST(test_grafo_for_each_aresta_saida_visita_adjacencias);
     RUN_TEST(test_grafo_atualizar_vm_regiao_altera_arestas_internas);
     RUN_TEST(test_grafo_calcular_componentes_lentos_retorna_bboxes);
+    RUN_TEST(test_grafo_aplicar_expansao_agm_altera_apenas_lentas_da_agm);
     return UNITY_END();
 }

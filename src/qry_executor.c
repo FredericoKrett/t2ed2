@@ -100,6 +100,16 @@ GrafoComponentes qry_executor_calcular_regs(QryComando comando, Grafo grafo) {
         grafo, qry_comando_get_limite_velocidade(comando));
 }
 
+GrafoArestas qry_executor_aplicar_exp(QryComando comando, Grafo grafo) {
+    if (comando == NULL || grafo == NULL ||
+        qry_comando_get_tipo(comando) != QRY_COMANDO_EXP) {
+        return NULL;
+    }
+
+    return grafo_aplicar_expansao_agm(
+        grafo, qry_comando_get_limite_velocidade(comando));
+}
+
 int qry_executor_calcular_percurso(QryComando comando, Grafo grafo,
                                    Registradores registradores,
                                    Caminho *out_curto,

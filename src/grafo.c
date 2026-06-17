@@ -45,6 +45,16 @@ struct grafo_componentes {
     size_t count;
 };
 
+struct grafo_arestas {
+    GrafoAresta *items;
+    size_t count;
+    size_t capacity;
+};
+
+struct mst_candidate {
+    struct grafo_aresta *aresta;
+};
+
 static char *copy_text(const char *text) {
     if (text == NULL) {
         return NULL;
@@ -162,6 +172,75 @@ static void componente_include_point(struct grafo_componente *componente,
     if (y > componente->max_y) {
         componente->max_y = y;
     }
+}
+
+static struct grafo_arestas *grafo_arestas_create(size_t capacity_hint) {
+    struct grafo_arestas *arestas =
+        (struct grafo_arestas *)calloc(1, sizeof(struct grafo_arestas));
+    if (arestas == NULL) {
+        return NULL;
+    }
+
+    if (capacity_hint > 0) {
+        arestas->items = (GrafoAresta *)malloc(capacity_hint *
+                                               sizeof(GrafoAresta));
+        if (arestas->items == NULL) {
+            free(arestas);
+            return NULL;
+        }
+        arestas->capacity = capacity_hint;
+    }
+
+    return arestas;
+}
+
+static int grafo_arestas_append(struct grafo_arestas *arestas,
+                                GrafoAresta aresta) {
+    GrafoAresta *new_items;
+    size_t new_capacity;
+
+    if (arestas == NULL || aresta == NULL) {
+        return 0;
+    }
+
+    if (arestas->count >= arestas->capacity) {
+        new_capacity = arestas->capacity == 0 ? DEFAULT_CAPACITY
+                                              : arestas->capacity * 2;
+        new_items = (GrafoAresta *)realloc(arestas->items,
+                                           new_capacity * sizeof(GrafoAresta));
+        if (new_items == NULL) {
+            return 0;
+        }
+        arestas->items = new_items;
+        arestas->capacity = new_capacity;
+    }
+
+    arestas->items[arestas->count] = aresta;
+    arestas->count++;
+    return 1;
+}
+
+static int compare_mst_candidate(const void *a, const void *b) {
+    const struct mst_candidate *candidate_a =
+        (const struct mst_candidate *)a;
+    const struct mst_candidate *candidate_b =
+        (const struct mst_candidate *)b;
+    const struct grafo_aresta *aresta_a = candidate_a->aresta;
+    const struct grafo_aresta *aresta_b = candidate_b->aresta;
+
+    if (aresta_a->cmp < aresta_b->cmp) {
+        return -1;
+    }
+    if (aresta_a->cmp > aresta_b->cmp) {
+        return 1;
+    }
+    if (aresta_a->origem != aresta_b->origem) {
+        return aresta_a->origem < aresta_b->origem ? -1 : 1;
+    }
+    if (aresta_a->destino != aresta_b->destino) {
+        return aresta_a->destino < aresta_b->destino ? -1 : 1;
+    }
+    return strcmp(aresta_a->nome, aresta_b->nome);
 }
 
 Grafo grafo_create(size_t capacity_hint) {
@@ -501,6 +580,113 @@ void grafo_componentes_destroy(GrafoComponentes componentes_ref) {
 
     free(componentes->items);
     free(componentes);
+}
+
+GrafoArestas grafo_aplicar_expansao_agm(Grafo grafo_ref, double limite_vm) {
+    struct grafo *grafo = (struct grafo *)grafo_ref;
+    struct grafo_arestas *selecionadas = NULL;
+    struct mst_candidate *candidates = NULL;
+    GrafoVertice *parent = NULL;
+    int *rank = NULL;
+    size_t candidate_count = 0;
+
+    if (grafo == NULL || limite_vm < 0.0) {
+        return NULL;
+    }
+
+    selecionadas = grafo_arestas_create(0);
+    if (selecionadas == NULL) {
+        return NULL;
+    }
+
+    if (grafo->vertice_count == 0 || grafo->aresta_count == 0) {
+        return selecionadas;
+    }
+
+    candidates = (struct mst_candidate *)malloc(
+        grafo->aresta_count * sizeof(struct mst_candidate));
+    parent = (GrafoVertice *)malloc(grafo->vertice_count *
+                                    sizeof(GrafoVertice));
+    rank = (int *)calloc(grafo->vertice_count, sizeof(int));
+    if (candidates == NULL || parent == NULL || rank == NULL) {
+        grafo_arestas_destroy(selecionadas);
+        free(candidates);
+        free(parent);
+        free(rank);
+        return NULL;
+    }
+
+    for (size_t i = 0; i < grafo->vertice_count; i++) {
+        parent[i] = (GrafoVertice)i;
+    }
+
+    for (size_t i = 0; i < grafo->vertice_count; i++) {
+        for (struct grafo_aresta *aresta = grafo->vertices[i].arestas_saida;
+             aresta != NULL;
+             aresta = aresta->next) {
+            candidates[candidate_count].aresta = aresta;
+            candidate_count++;
+        }
+    }
+
+    qsort(candidates, candidate_count, sizeof(struct mst_candidate),
+          compare_mst_candidate);
+
+    for (size_t i = 0; i < candidate_count; i++) {
+        struct grafo_aresta *aresta = candidates[i].aresta;
+        GrafoVertice root_origem = dsu_find(parent, aresta->origem);
+        GrafoVertice root_destino = dsu_find(parent, aresta->destino);
+
+        if (root_origem == root_destino) {
+            continue;
+        }
+
+        dsu_union(parent, rank, root_origem, root_destino);
+        if (aresta->vm < limite_vm &&
+            !grafo_arestas_append(selecionadas, aresta)) {
+            grafo_arestas_destroy(selecionadas);
+            free(candidates);
+            free(parent);
+            free(rank);
+            return NULL;
+        }
+    }
+
+    for (size_t i = 0; i < selecionadas->count; i++) {
+        struct grafo_aresta *aresta =
+            (struct grafo_aresta *)selecionadas->items[i];
+        aresta->vm *= 1.5;
+    }
+
+    free(candidates);
+    free(parent);
+    free(rank);
+    return selecionadas;
+}
+
+size_t grafo_arestas_count(GrafoArestas arestas_ref) {
+    struct grafo_arestas *arestas = (struct grafo_arestas *)arestas_ref;
+    return arestas != NULL ? arestas->count : 0;
+}
+
+GrafoAresta grafo_arestas_get(GrafoArestas arestas_ref, size_t indice) {
+    struct grafo_arestas *arestas = (struct grafo_arestas *)arestas_ref;
+
+    if (arestas == NULL || indice >= arestas->count) {
+        return NULL;
+    }
+
+    return arestas->items[indice];
+}
+
+void grafo_arestas_destroy(GrafoArestas arestas_ref) {
+    struct grafo_arestas *arestas = (struct grafo_arestas *)arestas_ref;
+    if (arestas == NULL) {
+        return;
+    }
+
+    free(arestas->items);
+    free(arestas);
 }
 
 GrafoVertice grafo_aresta_get_origem(GrafoAresta aresta_ref) {

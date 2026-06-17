@@ -262,6 +262,35 @@ void test_qry_executor_calcular_regs_retorna_componentes_lentos(void) {
     grafo_destroy(grafo);
 }
 
+void test_qry_executor_aplicar_exp_expande_arestas_lentas(void) {
+    Grafo grafo = grafo_create(2);
+    GrafoVertice v1 = grafo_add_vertice(grafo, "v1", 0.0, 0.0);
+    GrafoVertice v2 = grafo_add_vertice(grafo, "v2", 10.0, 0.0);
+    GrafoAresta aresta = grafo_add_aresta(grafo, v1, v2, "-", "-",
+                                          10.0, 2.0, "Rua_A");
+    QryComandos comandos;
+    GrafoArestas selecionadas;
+
+    write_file("exp 5.0\n");
+    comandos = qry_parser_parse_file(TEST_QRY_EXECUTOR_FILE);
+
+    TEST_ASSERT_NOT_NULL(grafo);
+    TEST_ASSERT_NOT_NULL(aresta);
+    TEST_ASSERT_NOT_NULL(comandos);
+
+    selecionadas = qry_executor_aplicar_exp(qry_comandos_get(comandos, 0),
+                                            grafo);
+
+    TEST_ASSERT_NOT_NULL(selecionadas);
+    TEST_ASSERT_EQUAL_INT(1, (int)grafo_arestas_count(selecionadas));
+    TEST_ASSERT_EQUAL_PTR(aresta, grafo_arestas_get(selecionadas, 0));
+    assert_double_near(3.0, grafo_aresta_get_vm(aresta));
+
+    grafo_arestas_destroy(selecionadas);
+    qry_comandos_destroy(comandos);
+    grafo_destroy(grafo);
+}
+
 void test_qry_executor_calcular_percurso_retorna_curto_e_rapido(void) {
     struct grafo_rotas rotas = criar_grafo_com_rotas();
     Registradores registradores = registradores_create();
@@ -353,6 +382,7 @@ int main(void) {
     RUN_TEST(test_qry_executor_resolve_origens_rejeita_parametros_invalidos);
     RUN_TEST(test_qry_executor_aplicar_mvm_atualiza_arestas_na_regiao);
     RUN_TEST(test_qry_executor_calcular_regs_retorna_componentes_lentos);
+    RUN_TEST(test_qry_executor_aplicar_exp_expande_arestas_lentas);
     RUN_TEST(test_qry_executor_calcular_percurso_retorna_curto_e_rapido);
     RUN_TEST(test_qry_executor_calcular_percurso_rejeita_registrador_ausente);
     RUN_TEST(test_qry_executor_calcular_percurso_rejeita_comando_invalido);

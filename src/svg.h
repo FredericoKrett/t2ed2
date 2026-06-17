@@ -25,6 +25,11 @@ typedef void *SvgPercursos;
 typedef void *SvgRegioes;
 
 /**
+ * @brief Lista opaca de arestas destacadas por expansao de vias.
+ */
+typedef void *SvgExpansoes;
+
+/**
  * @brief Cria uma lista vazia de percursos desenhaveis.
  *
  * @return Lista criada, ou NULL em caso de falha de alocacao.
@@ -82,6 +87,35 @@ int svg_regioes_add_componentes(SvgRegioes regioes,
 void svg_regioes_destroy(SvgRegioes regioes);
 
 /**
+ * @brief Cria uma lista vazia de expansoes desenhaveis.
+ *
+ * @return Lista criada, ou NULL em caso de falha de alocacao.
+ */
+SvgExpansoes svg_expansoes_create(void);
+
+/**
+ * @brief Copia arestas expandidas para a lista de expansoes desenhaveis.
+ *
+ * A funcao copia apenas as coordenadas das extremidades. A lista GrafoArestas
+ * continua pertencendo ao chamador e pode ser liberada depois da chamada.
+ *
+ * @param expansoes Lista alterada.
+ * @param grafo Grafo usado para consultar as coordenadas das arestas.
+ * @param arestas Lista de arestas alteradas pela expansao.
+ * @return 1 se copiou todos os segmentos; 0 em caso de parametro invalido ou
+ *         falha de alocacao.
+ */
+int svg_expansoes_add_arestas(SvgExpansoes expansoes, Grafo grafo,
+                              GrafoArestas arestas);
+
+/**
+ * @brief Libera a lista de expansoes desenhaveis.
+ *
+ * @param expansoes Lista criada por svg_expansoes_create.
+ */
+void svg_expansoes_destroy(SvgExpansoes expansoes);
+
+/**
  * @brief Gera um SVG base com quadras e sistema viario.
  *
  * Quadras sao desenhadas como retangulos com o estilo lido do .geo. Quando um
@@ -110,18 +144,19 @@ int svg_render_com_percursos(const char *filepath, QuadraStore quadras,
                              Grafo grafo, SvgPercursos percursos);
 
 /**
- * @brief Gera um SVG com quadras, vias, percursos e regioes adicionais.
+ * @brief Gera um SVG com quadras, vias, percursos, regioes e expansoes.
  *
  * @param filepath Caminho do arquivo SVG a ser criado.
  * @param quadras Tabela de quadras carregada do .geo. Pode ser NULL.
  * @param grafo Grafo viario carregado do .via. Pode ser NULL.
  * @param percursos Lista de percursos calculados. Pode ser NULL.
  * @param regioes Lista de regioes destacadas. Pode ser NULL.
+ * @param expansoes Lista de arestas expandidas. Pode ser NULL.
  * @return 1 se escreveu o arquivo; 0 em caso de parametro invalido ou erro de
  *         abertura/escrita.
  */
 int svg_render_com_anotacoes(const char *filepath, QuadraStore quadras,
                              Grafo grafo, SvgPercursos percursos,
-                             SvgRegioes regioes);
+                             SvgRegioes regioes, SvgExpansoes expansoes);
 
 #endif
