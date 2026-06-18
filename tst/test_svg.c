@@ -100,6 +100,11 @@ void test_svg_render_com_percursos_desenha_caminho_colorido(void) {
     TEST_ASSERT_TRUE(file_contains("<svg:g id=\"percursos\""));
     TEST_ASSERT_TRUE(file_contains("stroke=\"#ff6600\""));
     TEST_ASSERT_TRUE(file_contains("stroke-width=\"4\""));
+    TEST_ASSERT_TRUE(file_contains("<svg:path id=\"percurso_anim_0\""));
+    TEST_ASSERT_TRUE(file_contains("<svg:circle r=\"5.000000\""));
+    TEST_ASSERT_TRUE(file_contains("<svg:animateMotion"));
+    TEST_ASSERT_TRUE(file_contains("repeatCount=\"indefinite\""));
+    TEST_ASSERT_TRUE(file_contains("<svg:mpath href=\"#percurso_anim_0\""));
     TEST_ASSERT_TRUE(file_contains("width=\"18.000000\""));
     TEST_ASSERT_TRUE(file_contains("font-weight=\"bold\""));
     TEST_ASSERT_TRUE(file_contains(">I</svg:text>"));
