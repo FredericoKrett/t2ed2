@@ -649,12 +649,12 @@ int main(int argc, char *argv[]) {
         goto cleanup;
     }
 
-    relatorio = abrir_relatorio(config);
-    if (relatorio == NULL) {
-        goto cleanup;
-    }
-
     if (comandos != NULL) {
+        relatorio = abrir_relatorio(config);
+        if (relatorio == NULL) {
+            goto cleanup;
+        }
+
         registradores = registradores_create();
         if (registradores == NULL) {
             fprintf(stderr, "ted: erro de memoria ao criar registradores\n");
