@@ -475,8 +475,11 @@ static void draw_caminho(Grafo grafo, Caminho caminho, const char *cor,
                          struct svg_file_context *ctx) {
     size_t count;
 
-    if (grafo == NULL || caminho == NULL || cor == NULL || !ctx->ok ||
-        !caminho_existe(caminho)) {
+    if (grafo == NULL || caminho == NULL || cor == NULL || !ctx->ok) {
+        return;
+    }
+
+    if (!caminho_existe(caminho)) {
         return;
     }
 
@@ -511,6 +514,52 @@ static void draw_caminho(Grafo grafo, Caminho caminho, const char *cor,
     }
 }
 
+static void draw_placa(double x, double y, const char *texto,
+                       struct svg_file_context *ctx) {
+    if (texto == NULL || !ctx->ok) {
+        return;
+    }
+
+    fprintf(ctx->file,
+            "  <svg:rect x=\"%.6f\" y=\"%.6f\" width=\"18.000000\" "
+            "height=\"18.000000\" fill=\"white\" stroke=\"black\" "
+            "stroke-width=\"2\" />\n",
+            x - 9.0, y - 9.0);
+    fprintf(ctx->file,
+            "  <svg:text x=\"%.6f\" y=\"%.6f\" fill=\"black\" "
+            "font-size=\"12\" font-weight=\"bold\" text-anchor=\"middle\">",
+            x, y + 4.0);
+    write_escaped(ctx->file, texto);
+    fputs("</svg:text>\n", ctx->file);
+
+    if (ferror(ctx->file)) {
+        ctx->ok = 0;
+    }
+}
+
+static void draw_placas_caminho(Grafo grafo, Caminho caminho,
+                                struct svg_file_context *ctx) {
+    double origem_x;
+    double origem_y;
+    double destino_x;
+    double destino_y;
+
+    if (grafo == NULL || caminho == NULL || !ctx->ok) {
+        return;
+    }
+
+    if (!grafo_get_vertice_coords(grafo, caminho_get_origem(caminho),
+                                  &origem_x, &origem_y) ||
+        !grafo_get_vertice_coords(grafo, caminho_get_destino(caminho),
+                                  &destino_x, &destino_y)) {
+        ctx->ok = 0;
+        return;
+    }
+
+    draw_placa(origem_x, origem_y, "I", ctx);
+    draw_placa(destino_x, destino_y, "F", ctx);
+}
+
 static void draw_percursos(Grafo grafo, SvgPercursos percursos_ref,
                            struct svg_file_context *ctx) {
     struct svg_percursos *percursos = (struct svg_percursos *)percursos_ref;
@@ -525,6 +574,7 @@ static void draw_percursos(Grafo grafo, SvgPercursos percursos_ref,
     node = percursos->head;
     while (node != NULL) {
         draw_caminho(grafo, node->caminho, node->cor, ctx);
+        draw_placas_caminho(grafo, node->caminho, ctx);
         node = node->next;
     }
     fputs("</svg:g>\n", ctx->file);
