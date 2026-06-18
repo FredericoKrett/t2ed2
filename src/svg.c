@@ -639,7 +639,7 @@ static void draw_animacao_caminho(Grafo grafo, Caminho caminho,
     fprintf(ctx->file,
             "    <svg:animateMotion dur=\"6s\" repeatCount=\"indefinite\" "
             "rotate=\"auto\">\n"
-            "      <svg:mpath href=\"#percurso_anim_%zu\" />\n"
+            "      <svg:mpath xlink:href=\"#percurso_anim_%zu\" />\n"
             "    </svg:animateMotion>\n",
             indice);
     fputs("  </svg:circle>\n", ctx->file);
@@ -997,6 +997,7 @@ int svg_render_com_anotacoes(const char *filepath, QuadraStore quadras,
     fprintf(ctx.file,
             "<?xml version='1.0' encoding='utf-8'?>\n"
             "<svg:svg xmlns:svg=\"http://www.w3.org/2000/svg\" "
+            "xmlns:xlink=\"http://www.w3.org/1999/xlink\" "
             "viewBox=\"%.6f %.6f %.6f %.6f\">\n"
             "<svg:defs>\n"
             "  <svg:marker id=\"mArrow\" markerWidth=\"4\" markerHeight=\"4\" "
