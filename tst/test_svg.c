@@ -146,7 +146,7 @@ void test_svg_render_com_anotacoes_desenha_regioes_de_regs(void) {
 
     TEST_ASSERT_EQUAL_INT(1, svg_render_com_anotacoes(TEST_SVG_FILE, NULL,
                                                       grafo, NULL, regioes,
-                                                      NULL));
+                                                      NULL, NULL));
     TEST_ASSERT_TRUE(file_contains("<svg:g id=\"regs\""));
     TEST_ASSERT_TRUE(file_contains("fill-opacity=\"0.500000\""));
     TEST_ASSERT_TRUE(file_contains("stroke-width=\"3\""));
@@ -190,13 +190,29 @@ void test_svg_render_com_anotacoes_desenha_expansoes(void) {
 
     TEST_ASSERT_EQUAL_INT(1, svg_render_com_anotacoes(TEST_SVG_FILE, NULL,
                                                       grafo, NULL, NULL,
-                                                      expansoes));
+                                                      expansoes, NULL));
     TEST_ASSERT_TRUE(file_contains("<svg:g id=\"exp\""));
     TEST_ASSERT_TRUE(file_contains("stroke=\"red\""));
     TEST_ASSERT_TRUE(file_contains("stroke-width=\"5\""));
 
     svg_expansoes_destroy(expansoes);
     grafo_destroy(grafo);
+}
+
+void test_svg_render_com_anotacoes_desenha_origens(void) {
+    SvgOrigens origens = svg_origens_create();
+
+    TEST_ASSERT_NOT_NULL(origens);
+    TEST_ASSERT_EQUAL_INT(1, svg_origens_add(origens, "R3", 25.0, 40.0));
+
+    TEST_ASSERT_EQUAL_INT(1, svg_render_com_anotacoes(TEST_SVG_FILE, NULL,
+                                                      NULL, NULL, NULL, NULL,
+                                                      origens));
+    TEST_ASSERT_TRUE(file_contains("<svg:g id=\"origens\""));
+    TEST_ASSERT_TRUE(file_contains("stroke-dasharray=\"5,5\""));
+    TEST_ASSERT_TRUE(file_contains(">R3</svg:text>"));
+
+    svg_origens_destroy(origens);
 }
 
 int main(void) {
@@ -208,5 +224,6 @@ int main(void) {
     RUN_TEST(test_svg_render_com_anotacoes_desenha_regioes_de_regs);
     RUN_TEST(test_svg_regioes_rejeita_parametros_invalidos);
     RUN_TEST(test_svg_render_com_anotacoes_desenha_expansoes);
+    RUN_TEST(test_svg_render_com_anotacoes_desenha_origens);
     return UNITY_END();
 }

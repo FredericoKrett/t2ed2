@@ -65,6 +65,18 @@ struct svg_expansoes {
     struct svg_expansao_node *tail;
 };
 
+struct svg_origem_node {
+    char *registrador;
+    double x;
+    double y;
+    struct svg_origem_node *next;
+};
+
+struct svg_origens {
+    struct svg_origem_node *head;
+    struct svg_origem_node *tail;
+};
+
 static char *copy_text(const char *text) {
     char *copy;
     size_t length;
@@ -311,6 +323,62 @@ void svg_expansoes_destroy(SvgExpansoes expansoes_ref) {
     free(expansoes);
 }
 
+SvgOrigens svg_origens_create(void) {
+    return calloc(1, sizeof(struct svg_origens));
+}
+
+int svg_origens_add(SvgOrigens origens_ref, const char *registrador,
+                    double x, double y) {
+    struct svg_origens *origens = (struct svg_origens *)origens_ref;
+    struct svg_origem_node *node;
+
+    if (origens == NULL || registrador == NULL) {
+        return 0;
+    }
+
+    node = (struct svg_origem_node *)calloc(1, sizeof(struct svg_origem_node));
+    if (node == NULL) {
+        return 0;
+    }
+
+    node->registrador = copy_text(registrador);
+    if (node->registrador == NULL) {
+        free(node);
+        return 0;
+    }
+
+    node->x = x;
+    node->y = y;
+    if (origens->tail == NULL) {
+        origens->head = node;
+        origens->tail = node;
+    } else {
+        origens->tail->next = node;
+        origens->tail = node;
+    }
+
+    return 1;
+}
+
+void svg_origens_destroy(SvgOrigens origens_ref) {
+    struct svg_origens *origens = (struct svg_origens *)origens_ref;
+    struct svg_origem_node *node;
+
+    if (origens == NULL) {
+        return;
+    }
+
+    node = origens->head;
+    while (node != NULL) {
+        struct svg_origem_node *next = node->next;
+        free(node->registrador);
+        free(node);
+        node = next;
+    }
+
+    free(origens);
+}
+
 static void bbox_include_point(struct svg_bbox *bbox, double x, double y) {
     if (!bbox->has_item) {
         bbox->min_x = x;
@@ -524,6 +592,38 @@ static void draw_expansoes(SvgExpansoes expansoes_ref,
     }
 }
 
+static void draw_origens(SvgOrigens origens_ref, double topo_y,
+                         struct svg_file_context *ctx) {
+    struct svg_origens *origens = (struct svg_origens *)origens_ref;
+    struct svg_origem_node *node;
+
+    if (origens == NULL || origens->head == NULL || !ctx->ok) {
+        return;
+    }
+
+    fputs("<svg:g id=\"origens\">\n", ctx->file);
+    node = origens->head;
+    while (node != NULL) {
+        fprintf(ctx->file,
+                "  <svg:line x1=\"%.6f\" y1=\"%.6f\" x2=\"%.6f\" "
+                "y2=\"%.6f\" stroke=\"red\" stroke-width=\"2\" "
+                "stroke-dasharray=\"5,5\" />\n",
+                node->x, topo_y, node->x, node->y);
+        fprintf(ctx->file,
+                "  <svg:text x=\"%.6f\" y=\"%.6f\" fill=\"red\" "
+                "font-size=\"12\" text-anchor=\"middle\">",
+                node->x, topo_y + 12.0);
+        write_escaped(ctx->file, node->registrador);
+        fputs("</svg:text>\n", ctx->file);
+        node = node->next;
+    }
+    fputs("</svg:g>\n", ctx->file);
+
+    if (ferror(ctx->file)) {
+        ctx->ok = 0;
+    }
+}
+
 static void draw_quadra(Quadra quadra, void *context) {
     struct svg_file_context *ctx = (struct svg_file_context *)context;
     FILE *file = ctx->file;
@@ -645,18 +745,19 @@ static void draw_quadras(QuadraStore quadras, struct svg_file_context *ctx) {
 
 int svg_render_base(const char *filepath, QuadraStore quadras, Grafo grafo) {
     return svg_render_com_anotacoes(filepath, quadras, grafo, NULL, NULL,
-                                    NULL);
+                                    NULL, NULL);
 }
 
 int svg_render_com_percursos(const char *filepath, QuadraStore quadras,
                              Grafo grafo, SvgPercursos percursos) {
     return svg_render_com_anotacoes(filepath, quadras, grafo, percursos, NULL,
-                                    NULL);
+                                    NULL, NULL);
 }
 
 int svg_render_com_anotacoes(const char *filepath, QuadraStore quadras,
                              Grafo grafo, SvgPercursos percursos,
-                             SvgRegioes regioes, SvgExpansoes expansoes) {
+                             SvgRegioes regioes, SvgExpansoes expansoes,
+                             SvgOrigens origens) {
     struct svg_bbox bbox = {0.0, 0.0, 0.0, 0.0, 0};
     struct svg_file_context ctx;
 
@@ -695,6 +796,7 @@ int svg_render_com_anotacoes(const char *filepath, QuadraStore quadras,
     draw_regioes(regioes, &ctx);
     draw_expansoes(expansoes, &ctx);
     draw_percursos(grafo, percursos, &ctx);
+    draw_origens(origens, bbox.min_y, &ctx);
     fputs("</svg:svg>\n", ctx.file);
 
     if (fclose(ctx.file) != 0) {
