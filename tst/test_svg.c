@@ -155,7 +155,7 @@ void test_svg_render_com_anotacoes_desenha_regioes_de_regs(void) {
 
     TEST_ASSERT_EQUAL_INT(1, svg_render_com_anotacoes(TEST_SVG_FILE, NULL,
                                                       grafo, NULL, regioes,
-                                                      NULL, NULL));
+                                                      NULL, NULL, NULL));
     TEST_ASSERT_TRUE(file_contains("<svg:g id=\"regs\""));
     TEST_ASSERT_TRUE(file_contains("fill-opacity=\"0.500000\""));
     TEST_ASSERT_TRUE(file_contains("stroke-width=\"3\""));
@@ -172,6 +172,37 @@ void test_svg_regioes_rejeita_parametros_invalidos(void) {
     TEST_ASSERT_EQUAL_INT(0, svg_regioes_add_componentes(regioes, NULL));
 
     svg_regioes_destroy(regioes);
+}
+
+void test_svg_render_com_anotacoes_desenha_regioes_de_mvm(void) {
+    SvgMvmRegioes regioes = svg_mvm_regioes_create();
+
+    TEST_ASSERT_NOT_NULL(regioes);
+    TEST_ASSERT_EQUAL_INT(1, svg_mvm_regioes_add(regioes, 10.0, 20.0,
+                                                 30.0, 40.0));
+
+    TEST_ASSERT_EQUAL_INT(1, svg_render_com_anotacoes(TEST_SVG_FILE, NULL,
+                                                      NULL, NULL, NULL, NULL,
+                                                      NULL, regioes));
+    TEST_ASSERT_TRUE(file_contains("<svg:g id=\"mvm\""));
+    TEST_ASSERT_TRUE(file_contains("fill=\"red\""));
+    TEST_ASSERT_TRUE(file_contains("fill-opacity=\"0.300000\""));
+    TEST_ASSERT_TRUE(file_contains("stroke-dasharray=\"3,3\""));
+
+    svg_mvm_regioes_destroy(regioes);
+}
+
+void test_svg_mvm_regioes_rejeita_parametros_invalidos(void) {
+    SvgMvmRegioes regioes = svg_mvm_regioes_create();
+
+    TEST_ASSERT_NOT_NULL(regioes);
+    TEST_ASSERT_EQUAL_INT(0, svg_mvm_regioes_add(NULL, 0.0, 0.0, 1.0, 1.0));
+    TEST_ASSERT_EQUAL_INT(0, svg_mvm_regioes_add(regioes, 0.0, 0.0,
+                                                 -1.0, 1.0));
+    TEST_ASSERT_EQUAL_INT(0, svg_mvm_regioes_add(regioes, 0.0, 0.0,
+                                                 1.0, -1.0));
+
+    svg_mvm_regioes_destroy(regioes);
 }
 
 void test_svg_render_com_anotacoes_desenha_expansoes(void) {
@@ -199,7 +230,7 @@ void test_svg_render_com_anotacoes_desenha_expansoes(void) {
 
     TEST_ASSERT_EQUAL_INT(1, svg_render_com_anotacoes(TEST_SVG_FILE, NULL,
                                                       grafo, NULL, NULL,
-                                                      expansoes, NULL));
+                                                      expansoes, NULL, NULL));
     TEST_ASSERT_TRUE(file_contains("<svg:g id=\"exp\""));
     TEST_ASSERT_TRUE(file_contains("stroke=\"red\""));
     TEST_ASSERT_TRUE(file_contains("stroke-width=\"5\""));
@@ -216,7 +247,7 @@ void test_svg_render_com_anotacoes_desenha_origens(void) {
 
     TEST_ASSERT_EQUAL_INT(1, svg_render_com_anotacoes(TEST_SVG_FILE, NULL,
                                                       NULL, NULL, NULL, NULL,
-                                                      origens));
+                                                      origens, NULL));
     TEST_ASSERT_TRUE(file_contains("<svg:g id=\"origens\""));
     TEST_ASSERT_TRUE(file_contains("stroke-dasharray=\"5,5\""));
     TEST_ASSERT_TRUE(file_contains(">R3</svg:text>"));
@@ -232,6 +263,8 @@ int main(void) {
     RUN_TEST(test_svg_percursos_rejeita_parametros_invalidos);
     RUN_TEST(test_svg_render_com_anotacoes_desenha_regioes_de_regs);
     RUN_TEST(test_svg_regioes_rejeita_parametros_invalidos);
+    RUN_TEST(test_svg_render_com_anotacoes_desenha_regioes_de_mvm);
+    RUN_TEST(test_svg_mvm_regioes_rejeita_parametros_invalidos);
     RUN_TEST(test_svg_render_com_anotacoes_desenha_expansoes);
     RUN_TEST(test_svg_render_com_anotacoes_desenha_origens);
     return UNITY_END();

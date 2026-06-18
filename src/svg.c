@@ -52,6 +52,19 @@ struct svg_regioes {
     size_t count;
 };
 
+struct svg_mvm_regiao_node {
+    double x;
+    double y;
+    double w;
+    double h;
+    struct svg_mvm_regiao_node *next;
+};
+
+struct svg_mvm_regioes {
+    struct svg_mvm_regiao_node *head;
+    struct svg_mvm_regiao_node *tail;
+};
+
 struct svg_expansao_node {
     double x1;
     double y1;
@@ -231,6 +244,61 @@ void svg_regioes_destroy(SvgRegioes regioes_ref) {
     while (node != NULL) {
         struct svg_regiao_node *next = node->next;
         free(node->cor);
+        free(node);
+        node = next;
+    }
+
+    free(regioes);
+}
+
+SvgMvmRegioes svg_mvm_regioes_create(void) {
+    return calloc(1, sizeof(struct svg_mvm_regioes));
+}
+
+int svg_mvm_regioes_add(SvgMvmRegioes regioes_ref, double x, double y,
+                        double w, double h) {
+    struct svg_mvm_regioes *regioes =
+        (struct svg_mvm_regioes *)regioes_ref;
+    struct svg_mvm_regiao_node *node;
+
+    if (regioes == NULL || w < 0.0 || h < 0.0) {
+        return 0;
+    }
+
+    node = (struct svg_mvm_regiao_node *)calloc(
+        1, sizeof(struct svg_mvm_regiao_node));
+    if (node == NULL) {
+        return 0;
+    }
+
+    node->x = x;
+    node->y = y;
+    node->w = w;
+    node->h = h;
+
+    if (regioes->tail == NULL) {
+        regioes->head = node;
+        regioes->tail = node;
+    } else {
+        regioes->tail->next = node;
+        regioes->tail = node;
+    }
+
+    return 1;
+}
+
+void svg_mvm_regioes_destroy(SvgMvmRegioes regioes_ref) {
+    struct svg_mvm_regioes *regioes =
+        (struct svg_mvm_regioes *)regioes_ref;
+    struct svg_mvm_regiao_node *node;
+
+    if (regioes == NULL) {
+        return;
+    }
+
+    node = regioes->head;
+    while (node != NULL) {
+        struct svg_mvm_regiao_node *next = node->next;
         free(node);
         node = next;
     }
@@ -685,6 +753,34 @@ static void draw_regioes(SvgRegioes regioes_ref,
     }
 }
 
+static void draw_mvm_regioes(SvgMvmRegioes regioes_ref,
+                             struct svg_file_context *ctx) {
+    struct svg_mvm_regioes *regioes =
+        (struct svg_mvm_regioes *)regioes_ref;
+    struct svg_mvm_regiao_node *node;
+
+    if (regioes == NULL || regioes->head == NULL || !ctx->ok) {
+        return;
+    }
+
+    fputs("<svg:g id=\"mvm\">\n", ctx->file);
+    node = regioes->head;
+    while (node != NULL) {
+        fprintf(ctx->file,
+                "  <svg:rect x=\"%.6f\" y=\"%.6f\" width=\"%.6f\" "
+                "height=\"%.6f\" fill=\"red\" stroke=\"red\" "
+                "stroke-width=\"1\" fill-opacity=\"0.300000\" "
+                "stroke-dasharray=\"3,3\" />\n",
+                node->x, node->y, node->w, node->h);
+        node = node->next;
+    }
+    fputs("</svg:g>\n", ctx->file);
+
+    if (ferror(ctx->file)) {
+        ctx->ok = 0;
+    }
+}
+
 static void draw_expansoes(SvgExpansoes expansoes_ref,
                            struct svg_file_context *ctx) {
     struct svg_expansoes *expansoes =
@@ -865,19 +961,20 @@ static void draw_quadras(QuadraStore quadras, struct svg_file_context *ctx) {
 
 int svg_render_base(const char *filepath, QuadraStore quadras, Grafo grafo) {
     return svg_render_com_anotacoes(filepath, quadras, grafo, NULL, NULL,
-                                    NULL, NULL);
+                                    NULL, NULL, NULL);
 }
 
 int svg_render_com_percursos(const char *filepath, QuadraStore quadras,
                              Grafo grafo, SvgPercursos percursos) {
     return svg_render_com_anotacoes(filepath, quadras, grafo, percursos, NULL,
-                                    NULL, NULL);
+                                    NULL, NULL, NULL);
 }
 
 int svg_render_com_anotacoes(const char *filepath, QuadraStore quadras,
                              Grafo grafo, SvgPercursos percursos,
                              SvgRegioes regioes, SvgExpansoes expansoes,
-                             SvgOrigens origens) {
+                             SvgOrigens origens,
+                             SvgMvmRegioes mvm_regioes) {
     struct svg_bbox bbox = {0.0, 0.0, 0.0, 0.0, 0};
     struct svg_file_context ctx;
 
@@ -913,6 +1010,7 @@ int svg_render_com_anotacoes(const char *filepath, QuadraStore quadras,
 
     draw_grafo(grafo, &ctx);
     draw_quadras(quadras, &ctx);
+    draw_mvm_regioes(mvm_regioes, &ctx);
     draw_regioes(regioes, &ctx);
     draw_expansoes(expansoes, &ctx);
     draw_percursos(grafo, percursos, &ctx);

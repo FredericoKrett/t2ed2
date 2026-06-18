@@ -25,6 +25,11 @@ typedef void *SvgPercursos;
 typedef void *SvgRegioes;
 
 /**
+ * @brief Lista opaca de regioes afetadas por comandos mvm.
+ */
+typedef void *SvgMvmRegioes;
+
+/**
  * @brief Lista opaca de arestas destacadas por expansao de vias.
  */
 typedef void *SvgExpansoes;
@@ -90,6 +95,36 @@ int svg_regioes_add_componentes(SvgRegioes regioes,
  * @param regioes Lista criada por svg_regioes_create.
  */
 void svg_regioes_destroy(SvgRegioes regioes);
+
+/**
+ * @brief Cria uma lista vazia de regioes alteradas por mvm.
+ *
+ * @return Lista criada, ou NULL em caso de falha de alocacao.
+ */
+SvgMvmRegioes svg_mvm_regioes_create(void);
+
+/**
+ * @brief Adiciona o retangulo de uma regiao alterada por mvm.
+ *
+ * O retangulo e copiado para que o SVG possa destacar a area cuja velocidade
+ * media foi modificada.
+ *
+ * @param regioes Lista alterada.
+ * @param x Coordenada x do canto inferior esquerdo.
+ * @param y Coordenada y do canto inferior esquerdo.
+ * @param w Largura da regiao.
+ * @param h Altura da regiao.
+ * @return 1 se inseriu; 0 em caso de parametro invalido ou falha de alocacao.
+ */
+int svg_mvm_regioes_add(SvgMvmRegioes regioes, double x, double y,
+                        double w, double h);
+
+/**
+ * @brief Libera a lista de regioes alteradas por mvm.
+ *
+ * @param regioes Lista criada por svg_mvm_regioes_create.
+ */
+void svg_mvm_regioes_destroy(SvgMvmRegioes regioes);
 
 /**
  * @brief Cria uma lista vazia de expansoes desenhaveis.
@@ -187,12 +222,13 @@ int svg_render_com_percursos(const char *filepath, QuadraStore quadras,
  * @param regioes Lista de regioes destacadas. Pode ser NULL.
  * @param expansoes Lista de arestas expandidas. Pode ser NULL.
  * @param origens Lista de origens destacadas. Pode ser NULL.
+ * @param mvm_regioes Lista de regioes alteradas por mvm. Pode ser NULL.
  * @return 1 se escreveu o arquivo; 0 em caso de parametro invalido ou erro de
  *         abertura/escrita.
  */
 int svg_render_com_anotacoes(const char *filepath, QuadraStore quadras,
                              Grafo grafo, SvgPercursos percursos,
                              SvgRegioes regioes, SvgExpansoes expansoes,
-                             SvgOrigens origens);
+                             SvgOrigens origens, SvgMvmRegioes mvm_regioes);
 
 #endif
