@@ -107,6 +107,14 @@ void test_via_parser_rejeita_quantidade_de_vertices_inconsistente(void) {
     );
 
     TEST_ASSERT_NULL(via_parser_parse_file(TEST_VIA_FILE));
+
+    write_file(
+        "1\n"
+        "v v1 10.0 20.0\n"
+        "v v2 30.0 40.0\n"
+    );
+
+    TEST_ASSERT_NULL(via_parser_parse_file(TEST_VIA_FILE));
 }
 
 int main(void) {
