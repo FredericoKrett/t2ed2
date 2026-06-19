@@ -16,8 +16,9 @@
  * @brief Processa um arquivo .via e cria o grafo viario correspondente.
  *
  * O grafo retornado pertence ao chamador, que deve libera-lo com grafo_destroy.
- * Em caso de erro de abertura, comando malformado, vertice duplicado ou aresta
- * referenciando vertice inexistente, a funcao retorna NULL.
+ * Em caso de erro de abertura, comando malformado, quantidade de vertices
+ * diferente da declarada, vertice duplicado ou aresta referenciando vertice
+ * inexistente, a funcao retorna NULL.
  *
  * @param filepath Caminho do arquivo .via.
  * @return Grafo direcionado carregado, ou NULL em caso de erro.

@@ -80,7 +80,7 @@ Grafo via_parser_parse_file(const char *filepath) {
     FILE *file;
     Grafo grafo;
     char line[LINE_SIZE];
-    size_t capacity;
+    size_t expected_vertex_count;
     int edge_section_started = 0;
 
     if (filepath == NULL) {
@@ -92,12 +92,12 @@ Grafo via_parser_parse_file(const char *filepath) {
         return NULL;
     }
 
-    if (!read_vertex_capacity(file, &capacity)) {
+    if (!read_vertex_capacity(file, &expected_vertex_count)) {
         fclose(file);
         return NULL;
     }
 
-    grafo = grafo_create(capacity);
+    grafo = grafo_create(expected_vertex_count);
     if (grafo == NULL) {
         fclose(file);
         return NULL;
@@ -134,6 +134,12 @@ Grafo via_parser_parse_file(const char *filepath) {
             fclose(file);
             return NULL;
         }
+    }
+
+    if (grafo_get_vertice_count(grafo) != expected_vertex_count) {
+        grafo_destroy(grafo);
+        fclose(file);
+        return NULL;
     }
 
     fclose(file);
