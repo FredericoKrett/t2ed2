@@ -30,7 +30,8 @@ int registradores_parse_nome(const char *nome) {
     }
 
     indice = strtol(nome + 1, &end, 10);
-    if (end == NULL || *end != '\0' || !indice_valido((int)indice)) {
+    if (end == NULL || *end != '\0' || indice < 0 ||
+        indice >= REGISTRADORES_TOTAL) {
         return -1;
     }
 
