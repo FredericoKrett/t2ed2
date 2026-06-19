@@ -194,6 +194,29 @@ void test_svg_render_com_anotacoes_desenha_regioes_de_mvm(void) {
     svg_mvm_regioes_destroy(regioes);
 }
 
+void test_svg_render_com_anotacoes_inclui_mvm_no_viewbox(void) {
+    QuadraStore quadras = quadra_store_create(1);
+    Quadra quadra = quadra_create("cep1", 100.0, 100.0, 10.0, 10.0,
+                                  1.0, "white", "black");
+    SvgMvmRegioes regioes = svg_mvm_regioes_create();
+
+    TEST_ASSERT_NOT_NULL(quadras);
+    TEST_ASSERT_NOT_NULL(quadra);
+    TEST_ASSERT_NOT_NULL(regioes);
+    TEST_ASSERT_EQUAL_INT(1, quadra_store_insert(quadras, quadra));
+    TEST_ASSERT_EQUAL_INT(1, svg_mvm_regioes_add(regioes, 0.0, 0.0,
+                                                 20.0, 20.0));
+
+    TEST_ASSERT_EQUAL_INT(1, svg_render_com_anotacoes(TEST_SVG_FILE, quadras,
+                                                      NULL, NULL, NULL, NULL,
+                                                      NULL, regioes));
+    TEST_ASSERT_TRUE(file_contains(
+        "viewBox=\"-10.000000 -10.000000 130.000000 130.000000\""));
+
+    svg_mvm_regioes_destroy(regioes);
+    quadra_store_destroy(quadras);
+}
+
 void test_svg_mvm_regioes_rejeita_parametros_invalidos(void) {
     SvgMvmRegioes regioes = svg_mvm_regioes_create();
 
@@ -266,6 +289,7 @@ int main(void) {
     RUN_TEST(test_svg_render_com_anotacoes_desenha_regioes_de_regs);
     RUN_TEST(test_svg_regioes_rejeita_parametros_invalidos);
     RUN_TEST(test_svg_render_com_anotacoes_desenha_regioes_de_mvm);
+    RUN_TEST(test_svg_render_com_anotacoes_inclui_mvm_no_viewbox);
     RUN_TEST(test_svg_mvm_regioes_rejeita_parametros_invalidos);
     RUN_TEST(test_svg_render_com_anotacoes_desenha_expansoes);
     RUN_TEST(test_svg_render_com_anotacoes_desenha_origens);

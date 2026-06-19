@@ -502,6 +502,23 @@ static void bbox_include_grafo(Grafo grafo, struct svg_bbox *bbox) {
     }
 }
 
+static void bbox_include_mvm_regioes(SvgMvmRegioes regioes_ref,
+                                     struct svg_bbox *bbox) {
+    struct svg_mvm_regioes *regioes =
+        (struct svg_mvm_regioes *)regioes_ref;
+    struct svg_mvm_regiao_node *node;
+
+    if (regioes == NULL) {
+        return;
+    }
+
+    node = regioes->head;
+    while (node != NULL) {
+        bbox_include_rect(bbox, node->x, node->y, node->w, node->h);
+        node = node->next;
+    }
+}
+
 static void bbox_finish(struct svg_bbox *bbox) {
     if (!bbox->has_item) {
         bbox->min_x = 0.0;
@@ -986,6 +1003,7 @@ int svg_render_com_anotacoes(const char *filepath, QuadraStore quadras,
         quadra_store_for_each(quadras, bbox_include_quadra, &bbox);
     }
     bbox_include_grafo(grafo, &bbox);
+    bbox_include_mvm_regioes(mvm_regioes, &bbox);
     bbox_finish(&bbox);
 
     ctx.file = fopen(filepath, "w");
