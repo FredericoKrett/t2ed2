@@ -25,7 +25,13 @@ v v2 10 0
 e v1 v2 - - 10 1 Rua_A
 EOF
 
+./ted -e "$input_dir" -f caso.geo -o "$output_dir"
 ./ted -e "$input_dir" -f caso.geo -v caso-v.via -o "$output_dir"
+
+if [ ! -f "$output_dir/caso.svg" ]; then
+    echo "erro: svg geo-only nao foi gerado" >&2
+    exit 1
+fi
 
 if [ ! -f "$output_dir/caso-v.svg" ]; then
     echo "erro: svg base nao foi gerado" >&2
