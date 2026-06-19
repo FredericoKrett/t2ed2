@@ -100,11 +100,21 @@ void test_via_parser_parse_file_rejeita_aresta_com_vertice_ausente(void) {
     TEST_ASSERT_NULL(via_parser_parse_file(TEST_VIA_FILE));
 }
 
+void test_via_parser_rejeita_quantidade_de_vertices_inconsistente(void) {
+    write_file(
+        "2\n"
+        "v v1 10.0 20.0\n"
+    );
+
+    TEST_ASSERT_NULL(via_parser_parse_file(TEST_VIA_FILE));
+}
+
 int main(void) {
     UNITY_BEGIN();
     RUN_TEST(test_via_parser_parse_file_carrega_vertices_e_arestas);
     RUN_TEST(test_via_parser_parse_file_rejeita_arquivo_inexistente);
     RUN_TEST(test_via_parser_parse_file_rejeita_comando_malformado);
     RUN_TEST(test_via_parser_parse_file_rejeita_aresta_com_vertice_ausente);
+    RUN_TEST(test_via_parser_rejeita_quantidade_de_vertices_inconsistente);
     return UNITY_END();
 }
