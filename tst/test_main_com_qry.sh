@@ -60,6 +60,16 @@ for group in origens mvm regs exp percursos; do
     fi
 done
 
+for atributo in 'stroke-dasharray="5,5"' \
+                'fill-opacity="0.500000"' \
+                'fill-opacity="0.300000"' \
+                'stroke="red" stroke-width="5"'; do
+    if ! grep -Fq "$atributo" "$svg"; then
+        echo "erro: atributo visual ausente no svg: $atributo" >&2
+        exit 1
+    fi
+done
+
 animacoes=$(grep -c '<svg:animateMotion' "$svg" || true)
 if [ "$animacoes" -ne 2 ]; then
     echo "erro: svg nao contem os dois percursos animados" >&2
