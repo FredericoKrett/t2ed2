@@ -1,6 +1,8 @@
 #include "unity.h"
 #include "grafo.h"
 
+#include <math.h>
+
 #define EPSILON 0.001
 
 struct visita_context {
@@ -121,6 +123,9 @@ void test_grafo_add_aresta_direcionada_com_atributos(void) {
     assert_double_near(8.0, grafo_aresta_get_vm(aresta));
 
     grafo_aresta_set_vm(aresta, 12.5);
+    assert_double_near(12.5, grafo_aresta_get_vm(aresta));
+
+    grafo_aresta_set_vm(aresta, INFINITY);
     assert_double_near(12.5, grafo_aresta_get_vm(aresta));
 
     grafo_destroy(grafo);
