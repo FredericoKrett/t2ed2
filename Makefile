@@ -7,7 +7,7 @@ PROG = ted
 CORE_SRC = src/config.c src/quadra.c src/quadra_store.c src/geo_parser.c src/grafo.c src/via_parser.c src/registradores.c src/fila_prioridade.c src/caminho.c src/qry_parser.c src/qry_executor.c src/svg.c
 MAIN_SRC = src/main.c
 
-.PHONY: all ted test tstall clean
+.PHONY: all ted test tstall clean test_main_sem_qry test_main_com_qry
 
 all: ted
 
@@ -16,7 +16,7 @@ ted: $(CORE_SRC) $(MAIN_SRC)
 
 test: tstall
 
-tstall: test_config test_quadra test_quadra_store test_geo_parser test_grafo test_fila_prioridade test_caminho test_via_parser test_qry_parser test_qry_executor test_svg test_registradores test_main_sem_qry
+tstall: test_config test_quadra test_quadra_store test_geo_parser test_grafo test_fila_prioridade test_caminho test_via_parser test_qry_parser test_qry_executor test_svg test_registradores test_main_sem_qry test_main_com_qry
 	./test_config
 	./test_quadra
 	./test_quadra_store
@@ -30,6 +30,7 @@ tstall: test_config test_quadra test_quadra_store test_geo_parser test_grafo tes
 	./test_svg
 	./test_registradores
 	sh tst/test_main_sem_qry.sh
+	sh tst/test_main_com_qry.sh
 
 test_config: src/config.c src/config.h tst/test_config.c tst/unity/unity.c
 	$(CC) $(CFLAGS) src/config.c tst/test_config.c tst/unity/unity.c -o test_config $(LDFLAGS)
@@ -68,6 +69,8 @@ test_registradores: src/registradores.c src/registradores.h tst/test_registrador
 	$(CC) $(CFLAGS) src/registradores.c tst/test_registradores.c tst/unity/unity.c -o test_registradores $(LDFLAGS)
 
 test_main_sem_qry: ted tst/test_main_sem_qry.sh
+
+test_main_com_qry: ted tst/test_main_com_qry.sh
 
 clean:
 	rm -f $(PROG) *.o src/*.o tst/*.o test_*
