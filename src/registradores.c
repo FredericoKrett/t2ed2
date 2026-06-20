@@ -1,7 +1,6 @@
 #include "registradores.h"
 
 #include <stdlib.h>
-#include <string.h>
 
 struct registrador {
     int definido;
@@ -22,20 +21,19 @@ Registradores registradores_create(void) {
 }
 
 int registradores_parse_nome(const char *nome) {
-    char *end = NULL;
-    long indice;
-
     if (nome == NULL || nome[0] != 'R' || nome[1] == '\0') {
         return -1;
     }
 
-    indice = strtol(nome + 1, &end, 10);
-    if (end == NULL || *end != '\0' || indice < 0 ||
-        indice >= REGISTRADORES_TOTAL) {
-        return -1;
+    if (nome[1] >= '0' && nome[1] <= '9' && nome[2] == '\0') {
+        return nome[1] - '0';
     }
 
-    return (int)indice;
+    if (nome[1] == '1' && nome[2] == '0' && nome[3] == '\0') {
+        return 10;
+    }
+
+    return -1;
 }
 
 int registradores_set(Registradores registradores_ref, int indice,
