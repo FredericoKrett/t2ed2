@@ -29,6 +29,7 @@ void test_registradores_parse_nome_rejeita_invalidos(void) {
     TEST_ASSERT_EQUAL_INT(-1, registradores_parse_nome("R"));
     TEST_ASSERT_EQUAL_INT(-1, registradores_parse_nome("R11"));
     TEST_ASSERT_EQUAL_INT(-1, registradores_parse_nome("R4294967296"));
+    TEST_ASSERT_EQUAL_INT(-1, registradores_parse_nome("R+1"));
     TEST_ASSERT_EQUAL_INT(-1, registradores_parse_nome("r1"));
     TEST_ASSERT_EQUAL_INT(-1, registradores_parse_nome("A1"));
 }
