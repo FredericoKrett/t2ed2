@@ -26,7 +26,8 @@ typedef void *Quadra;
  * @param sw Espessura da borda vigente.
  * @param cfill Cor de preenchimento vigente.
  * @param cstrk Cor da borda vigente.
- * @return Nova quadra, ou NULL em caso de erro de alocacao ou parametro invalido.
+ * @return Nova quadra, ou NULL em caso de erro de alocacao, parametro invalido
+ *         ou valor numerico nao finito.
  */
 Quadra quadra_create(const char *cep, double x, double y, double w, double h,
                      double sw, const char *cfill, const char *cstrk);

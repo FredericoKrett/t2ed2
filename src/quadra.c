@@ -1,5 +1,6 @@
 #include "quadra.h"
 
+#include <math.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -30,13 +31,14 @@ static char *copy_text(const char *text) {
 }
 
 static int is_valid_dimension(double value) {
-    return value >= 0.0;
+    return isfinite(value) && value >= 0.0;
 }
 
 Quadra quadra_create(const char *cep, double x, double y, double w, double h,
                      double sw, const char *cfill, const char *cstrk) {
     if (cep == NULL || cfill == NULL || cstrk == NULL ||
-        !is_valid_dimension(w) || !is_valid_dimension(h) || sw < 0.0) {
+        !isfinite(x) || !isfinite(y) || !is_valid_dimension(w) ||
+        !is_valid_dimension(h) || !is_valid_dimension(sw)) {
         return NULL;
     }
 
