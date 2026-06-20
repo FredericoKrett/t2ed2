@@ -298,6 +298,12 @@ double grafo_aresta_get_vm(GrafoAresta aresta);
 
 /**
  * @brief Atualiza a velocidade media da aresta.
+ *
+ * A operacao nao altera a aresta quando ela e invalida ou quando a nova
+ * velocidade e negativa ou nao finita.
+ *
+ * @param aresta Aresta alterada.
+ * @param vm Nova velocidade media.
  */
 void grafo_aresta_set_vm(GrafoAresta aresta, double vm);
 

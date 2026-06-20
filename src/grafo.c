@@ -724,7 +724,7 @@ double grafo_aresta_get_vm(GrafoAresta aresta_ref) {
 
 void grafo_aresta_set_vm(GrafoAresta aresta_ref, double vm) {
     struct grafo_aresta *aresta = (struct grafo_aresta *)aresta_ref;
-    if (aresta != NULL && vm >= 0.0) {
+    if (aresta != NULL && isfinite(vm) && vm >= 0.0) {
         aresta->vm = vm;
     }
 }
