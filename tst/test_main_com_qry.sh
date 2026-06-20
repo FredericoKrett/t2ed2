@@ -36,6 +36,12 @@ exp 3
 p? R0 R1 red blue
 EOF
 
+cat > "$input_dir/inacessivel.qry" <<EOF
+@o? R0 cep1 S 0
+@o? R1 cep1 S 20
+p? R1 R0 green orange
+EOF
+
 ./ted -e "$input_dir" -f caso.geo -v caso-v.via -q consulta.qry \
     -o "$output_dir"
 
@@ -61,3 +67,20 @@ for report in '@o? R0 cep1 S' 'regs 3.000000' 'p? R0 R1' \
         exit 1
     fi
 done
+
+./ted -e "$input_dir" -f caso.geo -v caso-v.via -q inacessivel.qry \
+    -o "$output_dir"
+
+inacessivel_svg="$output_dir/caso-inacessivel.svg"
+inacessivel_txt="$output_dir/caso-inacessivel.txt"
+
+if [ ! -s "$inacessivel_svg" ] || [ ! -s "$inacessivel_txt" ]; then
+    echo "erro: saidas do percurso inacessivel nao foram geradas" >&2
+    exit 1
+fi
+
+inacessiveis=$(grep -c 'destino inacessivel' "$inacessivel_txt" || true)
+if [ "$inacessiveis" -ne 2 ]; then
+    echo "erro: percursos inacessiveis nao foram reportados" >&2
+    exit 1
+fi
