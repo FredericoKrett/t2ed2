@@ -60,6 +60,19 @@ for group in origens mvm regs exp percursos; do
     fi
 done
 
+animacoes=$(grep -c '<svg:animateMotion' "$svg" || true)
+if [ "$animacoes" -ne 2 ]; then
+    echo "erro: svg nao contem os dois percursos animados" >&2
+    exit 1
+fi
+
+for placa in I F; do
+    if ! grep -q ">$placa</svg:text>" "$svg"; then
+        echo "erro: placa $placa ausente no svg" >&2
+        exit 1
+    fi
+done
+
 for report in '@o? R0 cep1 S' 'regs 3.000000' 'p? R0 R1' \
               'percurso mais curto' 'percurso mais rapido'; do
     if ! grep -q "$report" "$txt"; then
