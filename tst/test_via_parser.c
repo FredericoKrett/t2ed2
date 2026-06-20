@@ -126,6 +126,17 @@ void test_via_parser_rejeita_coordenada_nao_finita(void) {
     TEST_ASSERT_NULL(via_parser_parse_file(TEST_VIA_FILE));
 }
 
+void test_via_parser_rejeita_comprimento_nao_finito(void) {
+    write_file(
+        "2\n"
+        "v v1 10.0 20.0\n"
+        "v v2 30.0 40.0\n"
+        "e v1 v2 - - nan 5.0 Rua_A\n"
+    );
+
+    TEST_ASSERT_NULL(via_parser_parse_file(TEST_VIA_FILE));
+}
+
 int main(void) {
     UNITY_BEGIN();
     RUN_TEST(test_via_parser_parse_file_carrega_vertices_e_arestas);
@@ -134,5 +145,6 @@ int main(void) {
     RUN_TEST(test_via_parser_parse_file_rejeita_aresta_com_vertice_ausente);
     RUN_TEST(test_via_parser_rejeita_quantidade_de_vertices_inconsistente);
     RUN_TEST(test_via_parser_rejeita_coordenada_nao_finita);
+    RUN_TEST(test_via_parser_rejeita_comprimento_nao_finito);
     return UNITY_END();
 }
