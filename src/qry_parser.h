@@ -43,6 +43,7 @@ typedef enum {
  * - regs vl;
  * - exp vl;
  * - p? reg1 reg2 cc cr.
+ * Valores numericos nao finitos sao considerados comandos malformados.
  *
  * @param filepath Caminho do arquivo .qry.
  * @return Lista de comandos, ou NULL em caso de erro de abertura, parametro

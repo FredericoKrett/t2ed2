@@ -1,5 +1,6 @@
 #include "qry_parser.h"
 
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -114,7 +115,7 @@ static int parse_origem(const char *line, struct qry_comando *comando) {
                   comando->reg1, comando->cep, face_texto,
                   &comando->num, extra);
     if (read != 4 || face_texto[1] != '\0' ||
-        !is_face_valida(face_texto[0])) {
+        !is_face_valida(face_texto[0]) || !isfinite(comando->num)) {
         return 0;
     }
 
@@ -131,7 +132,9 @@ static int parse_mvm(const char *line, struct qry_comando *comando) {
     read = sscanf(line, "%*s %lf %lf %lf %lf %lf %127s",
                   &comando->velocidade, &comando->x, &comando->y,
                   &comando->w, &comando->h, extra);
-    return read == 5;
+    return read == 5 && isfinite(comando->velocidade) &&
+           isfinite(comando->x) && isfinite(comando->y) &&
+           isfinite(comando->w) && isfinite(comando->h);
 }
 
 static int parse_limite_velocidade(const char *line,
@@ -143,7 +146,7 @@ static int parse_limite_velocidade(const char *line,
     comando_init(comando, tipo);
 
     read = sscanf(line, "%*s %lf %127s", &comando->limite_velocidade, extra);
-    return read == 1;
+    return read == 1 && isfinite(comando->limite_velocidade);
 }
 
 static int parse_percurso(const char *line, struct qry_comando *comando) {
