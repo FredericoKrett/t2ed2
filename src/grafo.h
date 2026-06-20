@@ -61,7 +61,8 @@ Grafo grafo_create(size_t capacity_hint);
  * @param id Identificador textual do vertice, como aparece no .via.
  * @param x Coordenada x do vertice.
  * @param y Coordenada y do vertice.
- * @return Identificador interno do vertice, ou -1 em caso de erro ou id duplicado.
+ * @return Identificador interno do vertice, ou -1 em caso de erro, coordenada
+ *         nao finita ou id duplicado.
  */
 GrafoVertice grafo_add_vertice(Grafo grafo, const char *id, double x, double y);
 

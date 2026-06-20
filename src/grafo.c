@@ -1,6 +1,7 @@
 #include "grafo.h"
 
 #include <float.h>
+#include <math.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -264,7 +265,8 @@ GrafoVertice grafo_add_vertice(Grafo grafo_ref, const char *id, double x, double
     struct grafo *grafo = (struct grafo *)grafo_ref;
     struct grafo_vertice *vertice;
 
-    if (grafo == NULL || id == NULL || grafo_find_vertice(grafo, id) >= 0) {
+    if (grafo == NULL || id == NULL || !isfinite(x) || !isfinite(y) ||
+        grafo_find_vertice(grafo, id) >= 0) {
         return -1;
     }
 
