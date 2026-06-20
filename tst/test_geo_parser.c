@@ -111,11 +111,22 @@ void test_geo_parser_parse_file_rejeita_comando_malformado(void) {
     quadra_store_destroy(store);
 }
 
+void test_geo_parser_rejeita_geometria_nao_finita(void) {
+    QuadraStore store = quadra_store_create(1);
+
+    write_file("q cep1 nan 20.0 30.0 40.0\n");
+
+    TEST_ASSERT_EQUAL_INT(-1, geo_parser_parse_file(TEST_GEO_FILE, store));
+
+    quadra_store_destroy(store);
+}
+
 int main(void) {
     UNITY_BEGIN();
     RUN_TEST(test_geo_parser_parse_file_carrega_quadras_com_estilo);
     RUN_TEST(test_geo_parser_parse_file_aceita_espessura_cq_com_px);
     RUN_TEST(test_geo_parser_parse_file_rejeita_arquivo_inexistente);
     RUN_TEST(test_geo_parser_parse_file_rejeita_comando_malformado);
+    RUN_TEST(test_geo_parser_rejeita_geometria_nao_finita);
     return UNITY_END();
 }
