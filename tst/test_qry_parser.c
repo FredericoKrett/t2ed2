@@ -123,6 +123,12 @@ void test_qry_parser_parse_file_rejeita_comando_malformado(void) {
     TEST_ASSERT_NULL(qry_parser_parse_file(TEST_QRY_FILE));
 }
 
+void test_qry_parser_rejeita_valor_nao_finito(void) {
+    write_file("mvm nan 10.0 20.0 30.0 40.0\n");
+
+    TEST_ASSERT_NULL(qry_parser_parse_file(TEST_QRY_FILE));
+}
+
 void test_qry_parser_rejeita_parametros_invalidos(void) {
     TEST_ASSERT_NULL(qry_parser_parse_file(NULL));
     TEST_ASSERT_EQUAL_INT(0, (int)qry_comandos_count(NULL));
@@ -142,6 +148,7 @@ int main(void) {
     RUN_TEST(test_qry_parser_parse_file_ignora_linhas_vazias);
     RUN_TEST(test_qry_parser_parse_file_rejeita_arquivo_inexistente);
     RUN_TEST(test_qry_parser_parse_file_rejeita_comando_malformado);
+    RUN_TEST(test_qry_parser_rejeita_valor_nao_finito);
     RUN_TEST(test_qry_parser_rejeita_parametros_invalidos);
     return UNITY_END();
 }
