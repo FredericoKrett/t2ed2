@@ -21,6 +21,12 @@ typedef void *QuadraStore;
 
 /**
  * @brief Funcao chamada durante a iteracao pelas quadras armazenadas.
+ *
+ * A quadra recebida continua pertencendo a tabela e nao deve ser destruida
+ * pelo callback.
+ *
+ * @param quadra Quadra visitada.
+ * @param context Contexto informado em quadra_store_for_each.
  */
 typedef void (*QuadraStoreVisitor)(Quadra quadra, void *context);
 
@@ -80,7 +86,8 @@ size_t quadra_store_count(QuadraStore store);
  * @brief Percorre todas as quadras armazenadas.
  *
  * A ordem de visita nao faz parte do contrato. A funcao visitante recebe cada
- * quadra e o contexto informado pelo chamador.
+ * quadra e o contexto informado pelo chamador. A tabela nao deve ser alterada
+ * durante a iteracao.
  *
  * @param store Tabela percorrida.
  * @param visitor Funcao chamada para cada quadra.

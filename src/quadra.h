@@ -110,8 +110,8 @@ const char *quadra_get_cstrk(Quadra quadra);
  * referencia para localizar enderecos em uma das quatro faces.
  *
  * @param quadra Quadra consultada.
- * @param out_x Ponteiro que recebera a coordenada x da ancora.
- * @param out_y Ponteiro que recebera a coordenada y da ancora.
+ * @param out_x Ponteiro opcional que recebera a coordenada x da ancora.
+ * @param out_y Ponteiro opcional que recebera a coordenada y da ancora.
  */
 void quadra_get_anchor(Quadra quadra, double *out_x, double *out_y);
 
@@ -121,8 +121,8 @@ void quadra_get_anchor(Quadra quadra, double *out_x, double *out_y);
  * @param quadra Quadra consultada.
  * @param face Face do endereco: 'N', 'S', 'L' ou 'O'.
  * @param num Distancia do endereco a partir da referencia da respectiva face.
- * @param out_x Ponteiro que recebera a coordenada x calculada.
- * @param out_y Ponteiro que recebera a coordenada y calculada.
+ * @param out_x Ponteiro opcional que recebera a coordenada x calculada.
+ * @param out_y Ponteiro opcional que recebera a coordenada y calculada.
  * @return 1 se a face foi reconhecida; 0 caso contrario.
  */
 int quadra_get_address_point(Quadra quadra, char face, double num,

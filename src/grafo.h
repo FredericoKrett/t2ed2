@@ -42,6 +42,13 @@ typedef void *GrafoArestas;
 
 /**
  * @brief Funcao chamada ao visitar arestas de saida de um vertice.
+ *
+ * A aresta recebida pertence ao grafo e permanece valida apenas enquanto o
+ * grafo existir.
+ *
+ * @param grafo Grafo percorrido.
+ * @param aresta Aresta de saida visitada.
+ * @param context Contexto informado em grafo_for_each_aresta_saida.
  */
 typedef void (*GrafoArestaVisitor)(Grafo grafo, GrafoAresta aresta,
                                    void *context);
@@ -89,8 +96,8 @@ const char *grafo_get_vertice_id(Grafo grafo, GrafoVertice vertice);
  *
  * @param grafo Grafo consultado.
  * @param vertice Identificador interno do vertice.
- * @param out_x Ponteiro que recebera a coordenada x.
- * @param out_y Ponteiro que recebera a coordenada y.
+ * @param out_x Ponteiro opcional que recebera a coordenada x.
+ * @param out_y Ponteiro opcional que recebera a coordenada y.
  * @return 1 se o vertice existe; 0 caso contrario.
  */
 int grafo_get_vertice_coords(Grafo grafo, GrafoVertice vertice,
@@ -214,10 +221,10 @@ size_t grafo_componentes_count(GrafoComponentes componentes);
  *
  * @param componentes Resultado consultado.
  * @param indice Indice do componente.
- * @param out_x Ponteiro que recebera a coordenada x minima.
- * @param out_y Ponteiro que recebera a coordenada y minima.
- * @param out_w Ponteiro que recebera a largura.
- * @param out_h Ponteiro que recebera a altura.
+ * @param out_x Ponteiro opcional que recebera a coordenada x minima.
+ * @param out_y Ponteiro opcional que recebera a coordenada y minima.
+ * @param out_w Ponteiro opcional que recebera a largura.
+ * @param out_h Ponteiro opcional que recebera a altura.
  * @return 1 se o componente existe; 0 caso contrario.
  */
 int grafo_componentes_get_bbox(GrafoComponentes componentes, size_t indice,

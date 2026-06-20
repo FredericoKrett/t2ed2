@@ -64,8 +64,8 @@ int registradores_is_set(Registradores registradores, int indice);
  *
  * @param registradores Tabela consultada.
  * @param indice Indice entre 0 e 10.
- * @param out_x Ponteiro que recebera a coordenada x.
- * @param out_y Ponteiro que recebera a coordenada y.
+ * @param out_x Ponteiro opcional que recebera a coordenada x.
+ * @param out_y Ponteiro opcional que recebera a coordenada y.
  * @return 1 se o registrador esta definido; 0 caso contrario.
  */
 int registradores_get(Registradores registradores, int indice,
