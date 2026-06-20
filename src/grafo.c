@@ -360,7 +360,8 @@ GrafoAresta grafo_add_aresta(Grafo grafo_ref, GrafoVertice origem,
     struct grafo_aresta *aresta;
 
     if (!is_valid_vertice(grafo, origem) || !is_valid_vertice(grafo, destino) ||
-        ldir == NULL || lesq == NULL || nome == NULL || cmp < 0.0 || vm < 0.0) {
+        ldir == NULL || lesq == NULL || nome == NULL || !isfinite(cmp) ||
+        !isfinite(vm) || cmp < 0.0 || vm < 0.0) {
         return NULL;
     }
 

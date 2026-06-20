@@ -121,7 +121,8 @@ GrafoVertice grafo_find_vertice_mais_proximo(Grafo grafo, double x, double y);
  * @param cmp Comprimento do trecho em metros.
  * @param vm Velocidade media do trecho.
  * @param nome Nome da rua ou avenida.
- * @return Aresta criada, ou NULL em caso de erro.
+ * @return Aresta criada, ou NULL em caso de erro, valor negativo ou valor
+ *         numerico nao finito.
  */
 GrafoAresta grafo_add_aresta(Grafo grafo, GrafoVertice origem,
                              GrafoVertice destino, const char *ldir,
