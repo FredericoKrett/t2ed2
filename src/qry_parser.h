@@ -114,36 +114,57 @@ char qry_comando_get_face(QryComando comando);
 
 /**
  * @brief Retorna o numero do endereco usado por @o?.
+ *
+ * @param comando Comando consultado.
+ * @return Numero do endereco, ou 0.0 se o comando for invalido.
  */
 double qry_comando_get_num(QryComando comando);
 
 /**
  * @brief Retorna a velocidade usada por mvm.
+ *
+ * @param comando Comando consultado.
+ * @return Velocidade, ou 0.0 se o comando for invalido.
  */
 double qry_comando_get_velocidade(QryComando comando);
 
 /**
  * @brief Retorna o limite de velocidade usado por regs ou exp.
+ *
+ * @param comando Comando consultado.
+ * @return Limite de velocidade, ou 0.0 se o comando for invalido.
  */
 double qry_comando_get_limite_velocidade(QryComando comando);
 
 /**
  * @brief Retorna a coordenada x usada por mvm.
+ *
+ * @param comando Comando consultado.
+ * @return Coordenada x, ou 0.0 se o comando for invalido.
  */
 double qry_comando_get_x(QryComando comando);
 
 /**
  * @brief Retorna a coordenada y usada por mvm.
+ *
+ * @param comando Comando consultado.
+ * @return Coordenada y, ou 0.0 se o comando for invalido.
  */
 double qry_comando_get_y(QryComando comando);
 
 /**
  * @brief Retorna a largura usada por mvm.
+ *
+ * @param comando Comando consultado.
+ * @return Largura, ou 0.0 se o comando for invalido.
  */
 double qry_comando_get_w(QryComando comando);
 
 /**
  * @brief Retorna a altura usada por mvm.
+ *
+ * @param comando Comando consultado.
+ * @return Altura, ou 0.0 se o comando for invalido.
  */
 double qry_comando_get_h(QryComando comando);
 

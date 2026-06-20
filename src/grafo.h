@@ -131,16 +131,26 @@ GrafoAresta grafo_add_aresta(Grafo grafo, GrafoVertice origem,
 
 /**
  * @brief Retorna a quantidade de vertices do grafo.
+ *
+ * @param grafo Grafo consultado.
+ * @return Quantidade de vertices, ou 0 se o grafo for invalido.
  */
 size_t grafo_get_vertice_count(Grafo grafo);
 
 /**
  * @brief Retorna a quantidade de arestas do grafo.
+ *
+ * @param grafo Grafo consultado.
+ * @return Quantidade de arestas, ou 0 se o grafo for invalido.
  */
 size_t grafo_get_aresta_count(Grafo grafo);
 
 /**
  * @brief Retorna a quantidade de arestas que saem de um vertice.
+ *
+ * @param grafo Grafo consultado.
+ * @param vertice Vertice consultado.
+ * @return Grau de saida, ou 0 se o grafo ou o vertice forem invalidos.
  */
 size_t grafo_get_out_degree(Grafo grafo, GrafoVertice vertice);
 
@@ -268,31 +278,49 @@ void grafo_arestas_destroy(GrafoArestas arestas);
 
 /**
  * @brief Retorna o vertice de origem da aresta.
+ *
+ * @param aresta Aresta consultada.
+ * @return Vertice de origem, ou -1 se a aresta for invalida.
  */
 GrafoVertice grafo_aresta_get_origem(GrafoAresta aresta);
 
 /**
  * @brief Retorna o vertice de destino da aresta.
+ *
+ * @param aresta Aresta consultada.
+ * @return Vertice de destino, ou -1 se a aresta for invalida.
  */
 GrafoVertice grafo_aresta_get_destino(GrafoAresta aresta);
 
 /**
  * @brief Retorna o CEP da quadra a direita da aresta.
+ *
+ * @param aresta Aresta consultada.
+ * @return CEP pertencente a aresta, ou NULL se a aresta for invalida.
  */
 const char *grafo_aresta_get_ldir(GrafoAresta aresta);
 
 /**
  * @brief Retorna o CEP da quadra a esquerda da aresta.
+ *
+ * @param aresta Aresta consultada.
+ * @return CEP pertencente a aresta, ou NULL se a aresta for invalida.
  */
 const char *grafo_aresta_get_lesq(GrafoAresta aresta);
 
 /**
  * @brief Retorna o comprimento da aresta.
+ *
+ * @param aresta Aresta consultada.
+ * @return Comprimento, ou 0.0 se a aresta for invalida.
  */
 double grafo_aresta_get_cmp(GrafoAresta aresta);
 
 /**
  * @brief Retorna a velocidade media da aresta.
+ *
+ * @param aresta Aresta consultada.
+ * @return Velocidade media, ou 0.0 se a aresta for invalida.
  */
 double grafo_aresta_get_vm(GrafoAresta aresta);
 
@@ -309,6 +337,9 @@ void grafo_aresta_set_vm(GrafoAresta aresta, double vm);
 
 /**
  * @brief Retorna o nome da via associada a aresta.
+ *
+ * @param aresta Aresta consultada.
+ * @return Nome pertencente a aresta, ou NULL se a aresta for invalida.
  */
 const char *grafo_aresta_get_nome(GrafoAresta aresta);
 

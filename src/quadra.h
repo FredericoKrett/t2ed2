@@ -49,36 +49,57 @@ const char *quadra_get_cep(Quadra quadra);
 
 /**
  * @brief Retorna a coordenada x da quadra.
+ *
+ * @param quadra Quadra consultada.
+ * @return Coordenada x, ou 0.0 se a quadra for invalida.
  */
 double quadra_get_x(Quadra quadra);
 
 /**
  * @brief Retorna a coordenada y da quadra.
+ *
+ * @param quadra Quadra consultada.
+ * @return Coordenada y, ou 0.0 se a quadra for invalida.
  */
 double quadra_get_y(Quadra quadra);
 
 /**
  * @brief Retorna a largura da quadra.
+ *
+ * @param quadra Quadra consultada.
+ * @return Largura, ou 0.0 se a quadra for invalida.
  */
 double quadra_get_w(Quadra quadra);
 
 /**
  * @brief Retorna a altura da quadra.
+ *
+ * @param quadra Quadra consultada.
+ * @return Altura, ou 0.0 se a quadra for invalida.
  */
 double quadra_get_h(Quadra quadra);
 
 /**
  * @brief Retorna a espessura da borda da quadra.
+ *
+ * @param quadra Quadra consultada.
+ * @return Espessura da borda, ou 0.0 se a quadra for invalida.
  */
 double quadra_get_sw(Quadra quadra);
 
 /**
  * @brief Retorna a cor de preenchimento da quadra.
+ *
+ * @param quadra Quadra consultada.
+ * @return Cor pertencente a quadra, ou NULL se a quadra for invalida.
  */
 const char *quadra_get_cfill(Quadra quadra);
 
 /**
  * @brief Retorna a cor da borda da quadra.
+ *
+ * @param quadra Quadra consultada.
+ * @return Cor pertencente a quadra, ou NULL se a quadra for invalida.
  */
 const char *quadra_get_cstrk(Quadra quadra);
 
