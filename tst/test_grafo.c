@@ -220,6 +220,30 @@ void test_grafo_calcular_componentes_lentos_retorna_bboxes(void) {
     TEST_ASSERT_NULL(grafo_calcular_componentes_lentos(NULL, 5.0));
 }
 
+void test_grafo_regs_separa_ilhas_por_trechos_lentos(void) {
+    Grafo grafo = grafo_create(4);
+    GrafoVertice v1 = grafo_add_vertice(grafo, "v1", 0.0, 0.0);
+    GrafoVertice v2 = grafo_add_vertice(grafo, "v2", 10.0, 0.0);
+    GrafoVertice v3 = grafo_add_vertice(grafo, "v3", 30.0, 0.0);
+    GrafoVertice v4 = grafo_add_vertice(grafo, "v4", 40.0, 0.0);
+    GrafoComponentes componentes;
+
+    TEST_ASSERT_NOT_NULL(grafo_add_aresta(grafo, v1, v2, "-", "-",
+                                          10.0, 8.0, "Rua_A"));
+    TEST_ASSERT_NOT_NULL(grafo_add_aresta(grafo, v2, v3, "-", "-",
+                                          20.0, 2.0, "Rua_Lenta"));
+    TEST_ASSERT_NOT_NULL(grafo_add_aresta(grafo, v3, v4, "-", "-",
+                                          10.0, 8.0, "Rua_B"));
+
+    componentes = grafo_calcular_componentes_lentos(grafo, 5.0);
+
+    TEST_ASSERT_NOT_NULL(componentes);
+    TEST_ASSERT_EQUAL_INT(2, (int)grafo_componentes_count(componentes));
+
+    grafo_componentes_destroy(componentes);
+    grafo_destroy(grafo);
+}
+
 void test_grafo_aplicar_expansao_agm_altera_apenas_lentas_da_agm(void) {
     Grafo grafo = grafo_create(4);
     GrafoVertice v1 = grafo_add_vertice(grafo, "v1", 0.0, 0.0);
@@ -269,6 +293,7 @@ int main(void) {
     RUN_TEST(test_grafo_for_each_aresta_saida_visita_adjacencias);
     RUN_TEST(test_grafo_atualizar_vm_regiao_altera_arestas_internas);
     RUN_TEST(test_grafo_calcular_componentes_lentos_retorna_bboxes);
+    RUN_TEST(test_grafo_regs_separa_ilhas_por_trechos_lentos);
     RUN_TEST(test_grafo_aplicar_expansao_agm_altera_apenas_lentas_da_agm);
     return UNITY_END();
 }
