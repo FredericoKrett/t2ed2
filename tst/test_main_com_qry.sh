@@ -28,8 +28,8 @@ e v2 v3 - - 10 5 Rua_B
 EOF
 
 cat > "$input_dir/consulta.qry" <<EOF
-@o? R0 cep1 S 0
-@o? R1 cep1 S 20
+@o? R0 cep1 S 1
+@o? R1 cep1 S 19
 mvm 2 0 -1 11 2
 regs 3
 exp 3
@@ -37,8 +37,8 @@ p? R0 R1 red blue
 EOF
 
 cat > "$input_dir/inacessivel.qry" <<EOF
-@o? R0 cep1 S 0
-@o? R1 cep1 S 20
+@o? R0 cep1 S 1
+@o? R1 cep1 S 19
 p? R1 R0 green orange
 EOF
 
@@ -82,6 +82,23 @@ for placa in I F; do
         exit 1
     fi
 done
+
+if ! grep -Fq '<svg:text x="1.000000" y="4.000000"' "$svg"; then
+    echo "erro: placa I nao esta na coordenada registrada" >&2
+    exit 1
+fi
+
+if ! grep -Fq '<svg:text x="19.000000" y="4.000000"' "$svg"; then
+    echo "erro: placa F nao esta na coordenada registrada" >&2
+    exit 1
+fi
+
+inicios=$(grep -c 'd="M 1.000000 0.000000' "$svg" || true)
+finais=$(grep -c 'L 19.000000 0.000000" fill="none"' "$svg" || true)
+if [ "$inicios" -ne 2 ] || [ "$finais" -ne 2 ]; then
+    echo "erro: animacoes nao ligam as coordenadas registradas" >&2
+    exit 1
+fi
 
 for report in '@o? R0 cep1 S' 'regs 3.000000' 'p? R0 R1' \
               'percurso mais curto' 'percurso mais rapido'; do
