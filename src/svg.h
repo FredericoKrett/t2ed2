@@ -81,7 +81,7 @@ void svg_percursos_destroy(SvgPercursos percursos);
 SvgRegioes svg_regioes_create(void);
 
 /**
- * @brief Copia componentes lentos para a lista de regioes desenhaveis.
+ * @brief Copia ilhas viarias para a lista de regioes desenhaveis.
  *
  * Para cada componente recebido, copia seu retangulo envolvente e atribui uma
  * cor de desenho. O resultado GrafoComponentes continua pertencendo ao
