@@ -192,24 +192,25 @@ int grafo_atualizar_vm_regiao(Grafo grafo, double vm, double x, double y,
                               double w, double h);
 
 /**
- * @brief Calcula componentes formados por arestas com velocidade insuficiente.
+ * @brief Calcula ilhas conectadas por arestas com velocidade suficiente.
  *
- * Seleciona arestas com velocidade media menor que limite_vm e calcula os
- * componentes conexos considerando essas arestas sem direcao. Vertices que nao
- * pertencem a nenhuma aresta selecionada nao formam componentes no resultado.
+ * Desconsidera as arestas com velocidade media menor que limite_vm e calcula
+ * os componentes conexos das arestas restantes, tratando as ligacoes sem
+ * direcao apenas para esta operacao. Vertices que nao pertencem a nenhuma
+ * aresta restante nao formam componentes no resultado.
  *
  * @param grafo Grafo consultado.
- * @param limite_vm Limite de velocidade usado para selecionar arestas lentas.
+ * @param limite_vm Limite abaixo do qual uma aresta e insuficiente.
  * @return Resultado opaco com os componentes, ou NULL em caso de parametro
  *         invalido ou falha de alocacao.
  */
-GrafoComponentes grafo_calcular_componentes_lentos(Grafo grafo,
-                                                   double limite_vm);
+GrafoComponentes grafo_calcular_componentes_viarios(Grafo grafo,
+                                                    double limite_vm);
 
 /**
  * @brief Retorna a quantidade de componentes calculados.
  *
- * @param componentes Resultado criado por grafo_calcular_componentes_lentos.
+ * @param componentes Resultado criado por grafo_calcular_componentes_viarios.
  * @return Quantidade de componentes, ou 0 se o resultado for invalido.
  */
 size_t grafo_componentes_count(GrafoComponentes componentes);
@@ -217,7 +218,7 @@ size_t grafo_componentes_count(GrafoComponentes componentes);
 /**
  * @brief Copia o retangulo envolvente de um componente.
  *
- * O retangulo envolve os vertices pertencentes ao componente lento.
+ * O retangulo envolve os vertices pertencentes a ilha viaria.
  *
  * @param componentes Resultado consultado.
  * @param indice Indice do componente.
@@ -234,7 +235,7 @@ int grafo_componentes_get_bbox(GrafoComponentes componentes, size_t indice,
 /**
  * @brief Libera o resultado de componentes conexos.
  *
- * @param componentes Resultado criado por grafo_calcular_componentes_lentos.
+ * @param componentes Resultado criado por grafo_calcular_componentes_viarios.
  */
 void grafo_componentes_destroy(GrafoComponentes componentes);
 

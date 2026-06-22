@@ -66,11 +66,11 @@ int qry_executor_resolve_origens(QryComandos comandos, QuadraStore quadras,
 int qry_executor_aplicar_mvm(QryComando comando, Grafo grafo);
 
 /**
- * @brief Calcula os componentes de trechos lentos de um comando regs.
+ * @brief Calcula as ilhas viarias de um comando regs.
  *
- * Usa o limite de velocidade do comando para selecionar arestas do grafo com
- * velocidade media insuficiente. O resultado pertence ao chamador, que deve
- * libera-lo com grafo_componentes_destroy.
+ * Desconsidera as arestas com velocidade media inferior ao limite do comando
+ * e calcula os componentes conexos das arestas restantes. O resultado pertence
+ * ao chamador, que deve libera-lo com grafo_componentes_destroy.
  *
  * @param comando Comando regs obtido do parser.
  * @param grafo Grafo viario consultado.

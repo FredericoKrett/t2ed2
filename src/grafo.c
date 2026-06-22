@@ -452,8 +452,8 @@ int grafo_atualizar_vm_regiao(Grafo grafo_ref, double vm, double x, double y,
     return atualizadas;
 }
 
-GrafoComponentes grafo_calcular_componentes_lentos(Grafo grafo_ref,
-                                                   double limite_vm) {
+GrafoComponentes grafo_calcular_componentes_viarios(Grafo grafo_ref,
+                                                    double limite_vm) {
     struct grafo *grafo = (struct grafo *)grafo_ref;
     struct grafo_componentes *componentes;
     GrafoVertice *parent = NULL;
@@ -500,7 +500,7 @@ GrafoComponentes grafo_calcular_componentes_lentos(Grafo grafo_ref,
         for (struct grafo_aresta *aresta = grafo->vertices[i].arestas_saida;
              aresta != NULL;
              aresta = aresta->next) {
-            if (aresta->vm < limite_vm) {
+            if (aresta->vm >= limite_vm) {
                 ativo[aresta->origem] = 1;
                 ativo[aresta->destino] = 1;
                 dsu_union(parent, rank, aresta->origem, aresta->destino);

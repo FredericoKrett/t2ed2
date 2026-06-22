@@ -224,7 +224,7 @@ void test_qry_executor_aplicar_mvm_atualiza_arestas_na_regiao(void) {
     grafo_destroy(grafo);
 }
 
-void test_qry_executor_calcular_regs_retorna_componentes_lentos(void) {
+void test_qry_executor_calcular_regs_retorna_ilhas_viarias(void) {
     Grafo grafo = grafo_create(3);
     GrafoVertice v1 = grafo_add_vertice(grafo, "v1", 0.0, 0.0);
     GrafoVertice v2 = grafo_add_vertice(grafo, "v2", 10.0, 0.0);
@@ -252,7 +252,7 @@ void test_qry_executor_calcular_regs_retorna_componentes_lentos(void) {
     TEST_ASSERT_EQUAL_INT(1, (int)grafo_componentes_count(componentes));
     TEST_ASSERT_EQUAL_INT(1, grafo_componentes_get_bbox(componentes, 0,
                                                         &x, &y, &w, &h));
-    assert_double_near(0.0, x);
+    assert_double_near(10.0, x);
     assert_double_near(0.0, y);
     assert_double_near(10.0, w);
     assert_double_near(0.0, h);
@@ -381,7 +381,7 @@ int main(void) {
     RUN_TEST(test_qry_executor_resolve_origens_rejeita_referencias_invalidas);
     RUN_TEST(test_qry_executor_resolve_origens_rejeita_parametros_invalidos);
     RUN_TEST(test_qry_executor_aplicar_mvm_atualiza_arestas_na_regiao);
-    RUN_TEST(test_qry_executor_calcular_regs_retorna_componentes_lentos);
+    RUN_TEST(test_qry_executor_calcular_regs_retorna_ilhas_viarias);
     RUN_TEST(test_qry_executor_aplicar_exp_expande_arestas_lentas);
     RUN_TEST(test_qry_executor_calcular_percurso_retorna_curto_e_rapido);
     RUN_TEST(test_qry_executor_calcular_percurso_rejeita_registrador_ausente);

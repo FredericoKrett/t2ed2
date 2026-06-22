@@ -149,7 +149,7 @@ void test_svg_render_com_anotacoes_desenha_regioes_de_regs(void) {
     TEST_ASSERT_NOT_NULL(grafo_add_aresta(grafo, v2, v3, "-", "-",
                                           100.0, 8.0, "Rua_Rapida"));
 
-    componentes = grafo_calcular_componentes_lentos(grafo, 5.0);
+    componentes = grafo_calcular_componentes_viarios(grafo, 5.0);
     TEST_ASSERT_NOT_NULL(componentes);
     TEST_ASSERT_EQUAL_INT(1, svg_regioes_add_componentes(regioes,
                                                          componentes));

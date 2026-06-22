@@ -173,7 +173,7 @@ void test_grafo_atualizar_vm_regiao_altera_arestas_internas(void) {
     grafo_destroy(grafo);
 }
 
-void test_grafo_calcular_componentes_lentos_retorna_bboxes(void) {
+void test_grafo_calcular_componentes_viarios_retorna_bboxes(void) {
     Grafo grafo = grafo_create(5);
     GrafoVertice v1 = grafo_add_vertice(grafo, "v1", 0.0, 0.0);
     GrafoVertice v2 = grafo_add_vertice(grafo, "v2", 10.0, 0.0);
@@ -187,15 +187,15 @@ void test_grafo_calcular_componentes_lentos_retorna_bboxes(void) {
     double h = 0.0;
 
     TEST_ASSERT_NOT_NULL(grafo_add_aresta(grafo, v1, v2, "-", "-",
-                                          10.0, 2.0, "Rua_A"));
+                                          10.0, 8.0, "Rua_A"));
     TEST_ASSERT_NOT_NULL(grafo_add_aresta(grafo, v2, v3, "-", "-",
-                                          10.0, 3.0, "Rua_B"));
+                                          10.0, 7.0, "Rua_B"));
     TEST_ASSERT_NOT_NULL(grafo_add_aresta(grafo, v3, v4, "-", "-",
-                                          10.0, 8.0, "Rua_C"));
+                                          10.0, 2.0, "Rua_C"));
     TEST_ASSERT_NOT_NULL(grafo_add_aresta(grafo, v4, v5, "-", "-",
-                                          10.0, 1.0, "Rua_D"));
+                                          10.0, 9.0, "Rua_D"));
 
-    componentes = grafo_calcular_componentes_lentos(grafo, 5.0);
+    componentes = grafo_calcular_componentes_viarios(grafo, 5.0);
 
     TEST_ASSERT_NOT_NULL(componentes);
     TEST_ASSERT_EQUAL_INT(2, (int)grafo_componentes_count(componentes));
@@ -217,7 +217,7 @@ void test_grafo_calcular_componentes_lentos_retorna_bboxes(void) {
     grafo_componentes_destroy(componentes);
     grafo_destroy(grafo);
 
-    TEST_ASSERT_NULL(grafo_calcular_componentes_lentos(NULL, 5.0));
+    TEST_ASSERT_NULL(grafo_calcular_componentes_viarios(NULL, 5.0));
 }
 
 void test_grafo_regs_separa_ilhas_por_trechos_lentos(void) {
@@ -235,7 +235,7 @@ void test_grafo_regs_separa_ilhas_por_trechos_lentos(void) {
     TEST_ASSERT_NOT_NULL(grafo_add_aresta(grafo, v3, v4, "-", "-",
                                           10.0, 8.0, "Rua_B"));
 
-    componentes = grafo_calcular_componentes_lentos(grafo, 5.0);
+    componentes = grafo_calcular_componentes_viarios(grafo, 5.0);
 
     TEST_ASSERT_NOT_NULL(componentes);
     TEST_ASSERT_EQUAL_INT(2, (int)grafo_componentes_count(componentes));
@@ -292,7 +292,7 @@ int main(void) {
     RUN_TEST(test_grafo_add_aresta_direcionada_com_atributos);
     RUN_TEST(test_grafo_for_each_aresta_saida_visita_adjacencias);
     RUN_TEST(test_grafo_atualizar_vm_regiao_altera_arestas_internas);
-    RUN_TEST(test_grafo_calcular_componentes_lentos_retorna_bboxes);
+    RUN_TEST(test_grafo_calcular_componentes_viarios_retorna_bboxes);
     RUN_TEST(test_grafo_regs_separa_ilhas_por_trechos_lentos);
     RUN_TEST(test_grafo_aplicar_expansao_agm_altera_apenas_lentas_da_agm);
     return UNITY_END();

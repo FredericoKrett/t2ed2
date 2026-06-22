@@ -96,7 +96,7 @@ GrafoComponentes qry_executor_calcular_regs(QryComando comando, Grafo grafo) {
         return NULL;
     }
 
-    return grafo_calcular_componentes_lentos(
+    return grafo_calcular_componentes_viarios(
         grafo, qry_comando_get_limite_velocidade(comando));
 }
 
