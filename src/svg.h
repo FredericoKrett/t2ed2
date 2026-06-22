@@ -56,9 +56,15 @@ SvgPercursos svg_percursos_create(void);
  * @param percursos Lista alterada.
  * @param caminho Caminho calculado pelo modulo caminho.
  * @param cor Cor SVG usada para desenhar o percurso.
+ * @param origem_x Coordenada x exata do endereco de origem.
+ * @param origem_y Coordenada y exata do endereco de origem.
+ * @param destino_x Coordenada x exata do endereco de destino.
+ * @param destino_y Coordenada y exata do endereco de destino.
  * @return 1 se inseriu; 0 em caso de parametro invalido ou falha de alocacao.
  */
-int svg_percursos_add(SvgPercursos percursos, Caminho caminho, const char *cor);
+int svg_percursos_add(SvgPercursos percursos, Caminho caminho, const char *cor,
+                      double origem_x, double origem_y,
+                      double destino_x, double destino_y);
 
 /**
  * @brief Libera a lista de percursos e os caminhos armazenados nela.

@@ -2,6 +2,7 @@
 
 #include "quadra.h"
 
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -29,6 +30,10 @@ struct svg_file_context {
 struct svg_percurso_node {
     Caminho caminho;
     char *cor;
+    double origem_x;
+    double origem_y;
+    double destino_x;
+    double destino_y;
     struct svg_percurso_node *next;
 };
 
@@ -113,11 +118,14 @@ SvgPercursos svg_percursos_create(void) {
 }
 
 int svg_percursos_add(SvgPercursos percursos_ref, Caminho caminho,
-                      const char *cor) {
+                      const char *cor, double origem_x, double origem_y,
+                      double destino_x, double destino_y) {
     struct svg_percursos *percursos = (struct svg_percursos *)percursos_ref;
     struct svg_percurso_node *node;
 
-    if (percursos == NULL || caminho == NULL || cor == NULL) {
+    if (percursos == NULL || caminho == NULL || cor == NULL ||
+        !isfinite(origem_x) || !isfinite(origem_y) ||
+        !isfinite(destino_x) || !isfinite(destino_y)) {
         return 0;
     }
 
@@ -134,6 +142,10 @@ int svg_percursos_add(SvgPercursos percursos_ref, Caminho caminho,
     }
 
     node->caminho = caminho;
+    node->origem_x = origem_x;
+    node->origem_y = origem_y;
+    node->destino_x = destino_x;
+    node->destino_y = destino_y;
     if (percursos->tail == NULL) {
         percursos->head = node;
         percursos->tail = node;
@@ -556,9 +568,33 @@ static void write_escaped(FILE *file, const char *text) {
     }
 }
 
+static void draw_segmento_caminho(double x1, double y1, double x2, double y2,
+                                  const char *cor,
+                                  struct svg_file_context *ctx) {
+    if ((x1 == x2 && y1 == y2) || cor == NULL || !ctx->ok) {
+        return;
+    }
+
+    fprintf(ctx->file,
+            "  <svg:line x1=\"%.6f\" y1=\"%.6f\" x2=\"%.6f\" "
+            "y2=\"%.6f\" stroke=\"",
+            x1, y1, x2, y2);
+    write_escaped(ctx->file, cor);
+    fputs("\" stroke-width=\"4\" stroke-opacity=\"1.000000\" />\n",
+          ctx->file);
+
+    if (ferror(ctx->file)) {
+        ctx->ok = 0;
+    }
+}
+
 static void draw_caminho(Grafo grafo, Caminho caminho, const char *cor,
+                         double origem_x, double origem_y,
+                         double destino_x, double destino_y,
                          struct svg_file_context *ctx) {
     size_t count;
+    double atual_x;
+    double atual_y;
 
     if (grafo == NULL || caminho == NULL || cor == NULL || !ctx->ok) {
         return;
@@ -568,38 +604,36 @@ static void draw_caminho(Grafo grafo, Caminho caminho, const char *cor,
         return;
     }
 
+    if (!grafo_get_vertice_coords(grafo, caminho_get_origem(caminho),
+                                  &atual_x, &atual_y)) {
+        ctx->ok = 0;
+        return;
+    }
+    draw_segmento_caminho(origem_x, origem_y, atual_x, atual_y, cor, ctx);
+
     count = caminho_get_aresta_count(caminho);
     for (size_t i = 0; i < count; i++) {
         GrafoAresta aresta = caminho_get_aresta(caminho, i);
-        double x1;
-        double y1;
         double x2;
         double y2;
 
-        if (!grafo_get_vertice_coords(grafo, grafo_aresta_get_origem(aresta),
-                                      &x1, &y1) ||
-            !grafo_get_vertice_coords(grafo, grafo_aresta_get_destino(aresta),
+        if (!grafo_get_vertice_coords(grafo, grafo_aresta_get_destino(aresta),
                                       &x2, &y2)) {
             ctx->ok = 0;
             return;
         }
 
-        fprintf(ctx->file,
-                "  <svg:line x1=\"%.6f\" y1=\"%.6f\" x2=\"%.6f\" "
-                "y2=\"%.6f\" stroke=\"",
-                x1, y1, x2, y2);
-        write_escaped(ctx->file, cor);
-        fputs("\" stroke-width=\"4\" stroke-opacity=\"1.000000\" />\n",
-              ctx->file);
-
-        if (ferror(ctx->file)) {
-            ctx->ok = 0;
-            return;
-        }
+        draw_segmento_caminho(atual_x, atual_y, x2, y2, cor, ctx);
+        atual_x = x2;
+        atual_y = y2;
     }
+
+    draw_segmento_caminho(atual_x, atual_y, destino_x, destino_y, cor, ctx);
 }
 
 static int write_caminho_path_data(Grafo grafo, Caminho caminho,
+                                   double origem_x, double origem_y,
+                                   double destino_x, double destino_y,
                                    struct svg_file_context *ctx) {
     double x;
     double y;
@@ -611,7 +645,10 @@ static int write_caminho_path_data(Grafo grafo, Caminho caminho,
         return 0;
     }
 
-    fprintf(ctx->file, "M %.6f %.6f", x, y);
+    fprintf(ctx->file, "M %.6f %.6f", origem_x, origem_y);
+    if (x != origem_x || y != origem_y) {
+        fprintf(ctx->file, " L %.6f %.6f", x, y);
+    }
     count = caminho_get_aresta_count(caminho);
     for (size_t i = 0; i < count; i++) {
         GrafoAresta aresta = caminho_get_aresta(caminho, i);
@@ -625,6 +662,10 @@ static int write_caminho_path_data(Grafo grafo, Caminho caminho,
         fprintf(ctx->file, " L %.6f %.6f", x, y);
     }
 
+    if (x != destino_x || y != destino_y) {
+        fprintf(ctx->file, " L %.6f %.6f", destino_x, destino_y);
+    }
+
     if (ferror(ctx->file)) {
         ctx->ok = 0;
     }
@@ -633,19 +674,22 @@ static int write_caminho_path_data(Grafo grafo, Caminho caminho,
 
 static void draw_animacao_caminho(Grafo grafo, Caminho caminho,
                                   const char *cor, size_t indice,
+                                  double origem_x, double origem_y,
+                                  double destino_x, double destino_y,
                                   struct svg_file_context *ctx) {
     if (grafo == NULL || caminho == NULL || cor == NULL || !ctx->ok) {
         return;
     }
 
-    if (!caminho_existe(caminho) || caminho_get_aresta_count(caminho) == 0) {
+    if (!caminho_existe(caminho)) {
         return;
     }
 
     fprintf(ctx->file,
             "  <svg:path id=\"percurso_anim_%zu\" d=\"",
             indice);
-    if (!write_caminho_path_data(grafo, caminho, ctx)) {
+    if (!write_caminho_path_data(grafo, caminho, origem_x, origem_y,
+                                 destino_x, destino_y, ctx)) {
         return;
     }
     fputs("\" fill=\"none\" stroke=\"none\" />\n", ctx->file);
@@ -689,22 +733,10 @@ static void draw_placa(double x, double y, const char *texto,
     }
 }
 
-static void draw_placas_caminho(Grafo grafo, Caminho caminho,
+static void draw_placas_caminho(double origem_x, double origem_y,
+                                double destino_x, double destino_y,
                                 struct svg_file_context *ctx) {
-    double origem_x;
-    double origem_y;
-    double destino_x;
-    double destino_y;
-
-    if (grafo == NULL || caminho == NULL || !ctx->ok) {
-        return;
-    }
-
-    if (!grafo_get_vertice_coords(grafo, caminho_get_origem(caminho),
-                                  &origem_x, &origem_y) ||
-        !grafo_get_vertice_coords(grafo, caminho_get_destino(caminho),
-                                  &destino_x, &destino_y)) {
-        ctx->ok = 0;
+    if (!ctx->ok) {
         return;
     }
 
@@ -726,9 +758,14 @@ static void draw_percursos(Grafo grafo, SvgPercursos percursos_ref,
     fputs("<svg:g id=\"percursos\">\n", ctx->file);
     node = percursos->head;
     while (node != NULL) {
-        draw_caminho(grafo, node->caminho, node->cor, ctx);
-        draw_animacao_caminho(grafo, node->caminho, node->cor, indice, ctx);
-        draw_placas_caminho(grafo, node->caminho, ctx);
+        draw_caminho(grafo, node->caminho, node->cor,
+                     node->origem_x, node->origem_y,
+                     node->destino_x, node->destino_y, ctx);
+        draw_animacao_caminho(grafo, node->caminho, node->cor, indice,
+                              node->origem_x, node->origem_y,
+                              node->destino_x, node->destino_y, ctx);
+        draw_placas_caminho(node->origem_x, node->origem_y,
+                            node->destino_x, node->destino_y, ctx);
         node = node->next;
         indice++;
     }

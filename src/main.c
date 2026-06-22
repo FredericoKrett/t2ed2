@@ -413,8 +413,25 @@ static int adicionar_percurso_svg(QryComando comando, Grafo grafo,
                                   FILE *relatorio) {
     Caminho curto = NULL;
     Caminho rapido = NULL;
+    int origem_indice;
+    int destino_indice;
+    double origem_x;
+    double origem_y;
+    double destino_x;
+    double destino_y;
 
-    if (grafo == NULL ||
+    if (grafo == NULL || registradores == NULL || percursos == NULL ||
+        comando == NULL) {
+        return 0;
+    }
+
+    origem_indice = registradores_parse_nome(qry_comando_get_reg1(comando));
+    destino_indice = registradores_parse_nome(qry_comando_get_reg2(comando));
+    if (origem_indice < 0 || destino_indice < 0 ||
+        !registradores_get(registradores, origem_indice,
+                           &origem_x, &origem_y) ||
+        !registradores_get(registradores, destino_indice,
+                           &destino_x, &destino_y) ||
         !qry_executor_calcular_percurso(comando, grafo, registradores,
                                         &curto, &rapido)) {
         return 0;
@@ -427,7 +444,8 @@ static int adicionar_percurso_svg(QryComando comando, Grafo grafo,
     }
 
     if (!svg_percursos_add(percursos, curto,
-                           qry_comando_get_cor_curto(comando))) {
+                           qry_comando_get_cor_curto(comando),
+                           origem_x, origem_y, destino_x, destino_y)) {
         caminho_destroy(curto);
         caminho_destroy(rapido);
         return 0;
@@ -435,7 +453,8 @@ static int adicionar_percurso_svg(QryComando comando, Grafo grafo,
     curto = NULL;
 
     if (!svg_percursos_add(percursos, rapido,
-                           qry_comando_get_cor_rapido(comando))) {
+                           qry_comando_get_cor_rapido(comando),
+                           origem_x, origem_y, destino_x, destino_y)) {
         caminho_destroy(rapido);
         return 0;
     }

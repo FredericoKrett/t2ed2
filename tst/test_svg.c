@@ -93,7 +93,8 @@ void test_svg_render_com_percursos_desenha_caminho_colorido(void) {
     caminho = caminho_calcular(grafo, origem, destino,
                                CAMINHO_CRITERIO_COMPRIMENTO);
     TEST_ASSERT_NOT_NULL(caminho);
-    TEST_ASSERT_EQUAL_INT(1, svg_percursos_add(percursos, caminho, "#ff6600"));
+    TEST_ASSERT_EQUAL_INT(1, svg_percursos_add(percursos, caminho, "#ff6600",
+                                              0.0, 0.0, 100.0, 0.0));
 
     TEST_ASSERT_EQUAL_INT(1, svg_render_com_percursos(TEST_SVG_FILE, NULL,
                                                       grafo, percursos));
@@ -120,9 +121,12 @@ void test_svg_percursos_rejeita_parametros_invalidos(void) {
     SvgPercursos percursos = svg_percursos_create();
 
     TEST_ASSERT_NOT_NULL(percursos);
-    TEST_ASSERT_EQUAL_INT(0, svg_percursos_add(NULL, NULL, "red"));
-    TEST_ASSERT_EQUAL_INT(0, svg_percursos_add(percursos, NULL, "red"));
-    TEST_ASSERT_EQUAL_INT(0, svg_percursos_add(percursos, NULL, NULL));
+    TEST_ASSERT_EQUAL_INT(0, svg_percursos_add(NULL, NULL, "red",
+                                              0.0, 0.0, 1.0, 1.0));
+    TEST_ASSERT_EQUAL_INT(0, svg_percursos_add(percursos, NULL, "red",
+                                              0.0, 0.0, 1.0, 1.0));
+    TEST_ASSERT_EQUAL_INT(0, svg_percursos_add(percursos, NULL, NULL,
+                                              0.0, 0.0, 1.0, 1.0));
 
     svg_percursos_destroy(percursos);
 }
