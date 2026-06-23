@@ -10,7 +10,7 @@ OUTPUT_DIR ?= saida_testes
 CORE_SRC = src/config.c src/quadra.c src/quadra_store.c src/geo_parser.c src/grafo.c src/via_parser.c src/registradores.c src/fila_prioridade.c src/caminho.c src/qry_parser.c src/qry_executor.c src/svg.c
 MAIN_SRC = src/main.c
 
-.PHONY: all ted run_all test tstall clean test_main_sem_qry test_main_com_qry test_main_erros
+.PHONY: all ted run_all test tstall clean test_make_src test_main_sem_qry test_main_com_qry test_main_erros
 
 all: ted
 
@@ -35,7 +35,7 @@ run_all: ted
 
 test: tstall
 
-tstall: test_config test_quadra test_quadra_store test_geo_parser test_grafo test_fila_prioridade test_caminho test_via_parser test_qry_parser test_qry_executor test_svg test_registradores test_main_sem_qry test_main_com_qry test_main_erros
+tstall: test_config test_quadra test_quadra_store test_geo_parser test_grafo test_fila_prioridade test_caminho test_via_parser test_qry_parser test_qry_executor test_svg test_registradores test_make_src test_main_sem_qry test_main_com_qry test_main_erros
 	./test_config
 	./test_quadra
 	./test_quadra_store
@@ -48,6 +48,7 @@ tstall: test_config test_quadra test_quadra_store test_geo_parser test_grafo tes
 	./test_qry_executor
 	./test_svg
 	./test_registradores
+	sh tst/test_make_src.sh
 	sh tst/test_main_sem_qry.sh
 	sh tst/test_main_com_qry.sh
 	sh tst/test_main_erros.sh
@@ -87,6 +88,8 @@ test_svg: src/svg.c src/svg.h src/quadra_store.c src/quadra_store.h src/quadra.c
 
 test_registradores: src/registradores.c src/registradores.h tst/test_registradores.c tst/unity/unity.c
 	$(CC) $(CFLAGS) src/registradores.c tst/test_registradores.c tst/unity/unity.c -o test_registradores $(LDFLAGS)
+
+test_make_src: src/Makefile tst/test_make_src.sh $(CORE_SRC) $(MAIN_SRC)
 
 test_main_sem_qry: ted tst/test_main_sem_qry.sh
 
