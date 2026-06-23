@@ -28,6 +28,23 @@ static int file_contains(const char *pattern) {
     return found;
 }
 
+static int file_count_lines(const char *pattern) {
+    FILE *file = fopen(TEST_SVG_FILE, "r");
+    char line[512];
+    int count = 0;
+
+    TEST_ASSERT_NOT_NULL(file);
+
+    while (fgets(line, sizeof(line), file) != NULL) {
+        if (strstr(line, pattern) != NULL) {
+            count++;
+        }
+    }
+
+    fclose(file);
+    return count;
+}
+
 void setUp(void) {
     remove(TEST_SVG_FILE);
 }
@@ -170,6 +187,47 @@ void test_svg_render_com_anotacoes_desenha_regioes_de_regs(void) {
     grafo_destroy(grafo);
 }
 
+void test_svg_regioes_usam_cores_distintas(void) {
+    Grafo grafo = grafo_create(14);
+    GrafoComponentes componentes;
+    SvgRegioes regioes = svg_regioes_create();
+
+    TEST_ASSERT_NOT_NULL(grafo);
+    TEST_ASSERT_NOT_NULL(regioes);
+
+    for (int i = 0; i < 7; i++) {
+        char origem_id[16];
+        char destino_id[16];
+        GrafoVertice origem;
+        GrafoVertice destino;
+
+        snprintf(origem_id, sizeof(origem_id), "v%da", i);
+        snprintf(destino_id, sizeof(destino_id), "v%db", i);
+        origem = grafo_add_vertice(grafo, origem_id, i * 30.0, 0.0);
+        destino = grafo_add_vertice(grafo, destino_id,
+                                    i * 30.0 + 10.0, 0.0);
+        TEST_ASSERT_NOT_EQUAL(-1, origem);
+        TEST_ASSERT_NOT_EQUAL(-1, destino);
+        TEST_ASSERT_NOT_NULL(grafo_add_aresta(grafo, origem, destino, "-", "-",
+                                              10.0, 8.0, "Rua"));
+    }
+
+    componentes = grafo_calcular_componentes_viarios(grafo, 5.0);
+    TEST_ASSERT_NOT_NULL(componentes);
+    TEST_ASSERT_EQUAL_INT(7, (int)grafo_componentes_count(componentes));
+    TEST_ASSERT_EQUAL_INT(1, svg_regioes_add_componentes(regioes,
+                                                         componentes));
+    grafo_componentes_destroy(componentes);
+
+    TEST_ASSERT_EQUAL_INT(1, svg_render_com_anotacoes(TEST_SVG_FILE, NULL,
+                                                      grafo, NULL, regioes,
+                                                      NULL, NULL, NULL));
+    TEST_ASSERT_EQUAL_INT(1, file_count_lines("fill=\"#ff0000\""));
+
+    svg_regioes_destroy(regioes);
+    grafo_destroy(grafo);
+}
+
 void test_svg_regioes_rejeita_parametros_invalidos(void) {
     SvgRegioes regioes = svg_regioes_create();
 
@@ -291,6 +349,7 @@ int main(void) {
     RUN_TEST(test_svg_render_com_percursos_desenha_caminho_colorido);
     RUN_TEST(test_svg_percursos_rejeita_parametros_invalidos);
     RUN_TEST(test_svg_render_com_anotacoes_desenha_regioes_de_regs);
+    RUN_TEST(test_svg_regioes_usam_cores_distintas);
     RUN_TEST(test_svg_regioes_rejeita_parametros_invalidos);
     RUN_TEST(test_svg_render_com_anotacoes_desenha_regioes_de_mvm);
     RUN_TEST(test_svg_render_com_anotacoes_inclui_mvm_no_viewbox);
