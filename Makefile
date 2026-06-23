@@ -3,16 +3,35 @@ CFLAGS = -std=c99 -fstack-protector-all -Wall -Wextra -Werror=implicit-function-
 LDFLAGS =
 
 PROG = ted
+CASES = c1 c2 c3
+INPUT_DIR ?= .
+OUTPUT_DIR ?= saida_testes
 
 CORE_SRC = src/config.c src/quadra.c src/quadra_store.c src/geo_parser.c src/grafo.c src/via_parser.c src/registradores.c src/fila_prioridade.c src/caminho.c src/qry_parser.c src/qry_executor.c src/svg.c
 MAIN_SRC = src/main.c
 
-.PHONY: all ted test tstall clean test_main_sem_qry test_main_com_qry test_main_erros
+.PHONY: all ted run_all test tstall clean test_main_sem_qry test_main_com_qry test_main_erros
 
 all: ted
 
 ted: $(CORE_SRC) $(MAIN_SRC)
 	$(CC) $(CFLAGS) $(CORE_SRC) $(MAIN_SRC) -o $(PROG) $(LDFLAGS)
+
+run_all: ted
+	@mkdir -p "$(OUTPUT_DIR)"
+	@set -e; \
+	for caso in $(CASES); do \
+		test -f "$(INPUT_DIR)/$$caso.geo" || { echo "arquivo ausente: $(INPUT_DIR)/$$caso.geo"; exit 1; }; \
+		test -f "$(INPUT_DIR)/$$caso-v.via" || { echo "arquivo ausente: $(INPUT_DIR)/$$caso-v.via"; exit 1; }; \
+		./$(PROG) -e "$(INPUT_DIR)" -f "$$caso.geo" -o "$(OUTPUT_DIR)"; \
+		./$(PROG) -e "$(INPUT_DIR)" -f "$$caso.geo" -v "$$caso-v.via" -o "$(OUTPUT_DIR)"; \
+		for qry in "$(INPUT_DIR)/$$caso"/*.qry; do \
+			test -f "$$qry" || { echo "nenhum .qry encontrado para $$caso"; exit 1; }; \
+			qry_nome=$${qry##*/}; \
+			./$(PROG) -e "$(INPUT_DIR)" -f "$$caso.geo" -v "$$caso-v.via" -q "$$caso/$$qry_nome" -o "$(OUTPUT_DIR)"; \
+		done; \
+	done
+	@echo "casos processados em $(OUTPUT_DIR)"
 
 test: tstall
 
