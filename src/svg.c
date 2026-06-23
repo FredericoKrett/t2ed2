@@ -9,10 +9,9 @@
 
 #define SVG_MARGIN 10.0
 #define SVG_DEFAULT_SIZE 1000.0
-#define REGIAO_COR_COUNT 6
-
-static const char *REGIAO_CORES[REGIAO_COR_COUNT] = {
-    "#ff0000", "#00aaff", "#ffaa00", "#8a2be2", "#00aa55", "#ff66cc"};
+#define REGIAO_COR_MODULO 0x1000000UL
+#define REGIAO_COR_PASSO 0x9e3779UL
+#define REGIAO_COR_INICIAL 0xff0000UL
 
 struct svg_bbox {
     double min_x;
@@ -218,6 +217,15 @@ static int svg_regioes_add_rect(SvgRegioes regioes_ref, double x, double y,
     return 1;
 }
 
+static void svg_regiao_criar_cor(size_t indice, char cor[8]) {
+    unsigned long valor =
+        (REGIAO_COR_INICIAL +
+         (indice % REGIAO_COR_MODULO) * REGIAO_COR_PASSO) %
+        REGIAO_COR_MODULO;
+
+    snprintf(cor, 8, "#%06lx", valor);
+}
+
 int svg_regioes_add_componentes(SvgRegioes regioes_ref,
                                 GrafoComponentes componentes) {
     struct svg_regioes *regioes = (struct svg_regioes *)regioes_ref;
@@ -233,7 +241,9 @@ int svg_regioes_add_componentes(SvgRegioes regioes_ref,
         double y;
         double w;
         double h;
-        const char *cor = REGIAO_CORES[regioes->count % REGIAO_COR_COUNT];
+        char cor[8];
+
+        svg_regiao_criar_cor(regioes->count, cor);
 
         if (!grafo_componentes_get_bbox(componentes, i, &x, &y, &w, &h) ||
             !svg_regioes_add_rect(regioes, x, y, w, h, cor)) {
